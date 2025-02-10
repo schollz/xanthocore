@@ -1,21 +1,32 @@
 
+// #define INCLUDE_FVERB3
+
 #include "core_cm7.h"
 #include "daisy_pod.h"
 #include "daisysp.h"
 //
 #include "Voice.h"
+#ifdef INCLUDE_FVERB3
+#include "lib/fverb3.h"
+#endif
 
 using namespace softcut;
 Voice voice;
 FadeCurves fadeCurves;
-
+#ifdef INCLUDE_FVERB3
+FVerb3 fverb3;
+#endif
 uint8_t DMA_BUFFER_MEM_SECTION buffer_spi[4];
 #define INCLUDE_AUDIO_PROFILING 1
 #define RP2040_I2C_ADDRESS 0x28
 #define AUDIO_BLOCK_SIZE 128
 #define AUDIO_SAMPLE_RATE 48000
 #define CROSSFADE_PREROLL 4800
+#ifdef INCLUDE_FVERB3
+#define MAX_SIZE (8388608)
+#else
 #define MAX_SIZE (8388608 * 2)
+#endif
 #define CYCLES_AVAILBLE \
   1066666  // (400000000 * AUDIO_BLOCK_SIZE / AUDIO_SAMPLE_RATE)
 using namespace daisy;
@@ -56,6 +67,10 @@ static void AudioCallback(AudioHandle::InterleavingInputBuffer in,
   // Process with Voice (only processing left channel here)
   voice.processBlockMono(inl, outl, AUDIO_BLOCK_SIZE);
 
+#ifdef INCLUDE_FVERB3
+  fverb3.compute(AUDIO_BLOCK_SIZE, inl, inr, outl, outr);
+#endif
+
   // Interleave output samples
   for (size_t i = 0; i < size; i += 2) {
     out[i] = outl[i / 2];      // Left channel output
@@ -81,6 +96,9 @@ int main(void) {
   hw.Init(true);
   daisyseed.StartLog(false);
 
+#ifdef INCLUDE_FVERB3
+  fverb3.init(AUDIO_SAMPLE_RATE);
+#endif
   // fadeCurves.init();
   voice.reset();
   voice.setBuffer(tape_linear_buffer, MAX_SIZE);
