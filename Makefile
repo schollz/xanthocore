@@ -13,9 +13,13 @@ APP_TYPE=BOOT_QSPI
 # > make program-dfu
 
 # Sources
-CPP_SOURCES = main.cpp 
-	
-# C_SOURCES = audio.c
+CPP_SOURCES = main.cpp \
+	FadeCurves.cpp \
+	ReadWriteHead.cpp \
+	SubHead.cpp \
+	Svf.cpp \
+	Voice.cpp
+
 
 # Library Locations
 LIBDAISY_DIR = libDaisy
@@ -23,6 +27,8 @@ DAISYSP_DIR = DaisySP
 USE_FATFS = 1
 LDFLAGS += -u _printf_float
 
+# Compiler Flags
+CXXFLAGS += $(INCLUDES)
 # Core location, and generic Makefile.
 SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
 include $(SYSTEM_FILES_DIR)/Makefile
