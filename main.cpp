@@ -2,6 +2,12 @@
 #include "core_cm7.h"
 #include "daisy_pod.h"
 #include "daisysp.h"
+//
+#include "Voice.h"
+
+using namespace softcut;
+Voice voice;
+FadeCurves fadeCurves;
 
 uint8_t DMA_BUFFER_MEM_SECTION buffer_spi[4];
 #define INCLUDE_AUDIO_PROFILING 1
@@ -9,7 +15,7 @@ uint8_t DMA_BUFFER_MEM_SECTION buffer_spi[4];
 #define AUDIO_BLOCK_SIZE 128
 #define AUDIO_SAMPLE_RATE 48000
 #define CROSSFADE_PREROLL 4800
-#define MAX_SIZE 15897648
+#define MAX_SIZE (8388608 * 2)
 #define CYCLES_AVAILBLE \
   1066666  // (400000000 * AUDIO_BLOCK_SIZE / AUDIO_SAMPLE_RATE)
 using namespace daisy;
@@ -18,6 +24,7 @@ using namespace daisysp;
 DaisyPod hw;
 DaisySeed daisyseed;
 Metro print_timer;
+float DSY_SDRAM_BSS tape_linear_buffer[MAX_SIZE];
 
 size_t audiocallback_sample_num = 0;
 float cpu_needed = 0.0f;
@@ -40,9 +47,26 @@ static void AudioCallback(AudioHandle::InterleavingInputBuffer in,
   audiocallback_sample_num = size / 2;
 #endif
 
+  // Deinterleave input samples
+  for (size_t i = 0; i < size; i += 2) {
+    inl[i / 2] = in[i];      // Left channel
+    inr[i / 2] = in[i + 1];  // Right channel
+  }
+
+  // Process with Voice (only processing left channel here)
+  voice.processBlockMono(inl, outl, AUDIO_BLOCK_SIZE);
+
+  // Interleave output samples
+  for (size_t i = 0; i < size; i += 2) {
+    out[i] = outl[i / 2];      // Left channel output
+    out[i + 1] = outl[i / 2];  // Duplicate left channel to right
+  }
+
   if (print_timer.Process()) {
     // print hello
-    daisyseed.PrintLine("cpu needed: %2.1f", cpu_needed);
+    daisyseed.PrintLine("cpu needed: %2.1f, %2.1f, %2.1f", cpu_needed,
+                        voice.getSavedPosition(), hw.knob1.Process());
+    voice.setRate(hw.knob1.Process() * 2 - 1);
   }
 
 #ifdef INCLUDE_AUDIO_PROFILING
@@ -54,8 +78,26 @@ static void AudioCallback(AudioHandle::InterleavingInputBuffer in,
 int main(void) {
   // hw.Init(false): 74.7% avg, 90.3% max
   // hw.Init(true): 79.9% avg, 96.6% max
-  hw.Init(false);
+  hw.Init(true);
   daisyseed.StartLog(false);
+
+  // fadeCurves.init();
+  voice.reset();
+  voice.setBuffer(tape_linear_buffer, MAX_SIZE);
+  voice.setSampleRate(AUDIO_SAMPLE_RATE);
+  voice.setRate(1.0);
+  voice.setLoopStart(1.0);
+  voice.setLoopEnd(2.0);
+  voice.setLoopFlag(true);
+  voice.setFadeTime(0.1);
+  voice.setRecLevel(1.0);
+  voice.setPreLevel(0.5);
+  voice.setRecFlag(true);
+  voice.setRecOnceFlag(false);
+  voice.setPlayFlag(true);
+  voice.cutToPos(1.0);
+  voice.setRecPreSlewTime(0.5);
+  voice.setRateSlewTime(0.5);
 
 #ifdef INCLUDE_AUDIO_PROFILING
   // setup measurement
@@ -70,12 +112,13 @@ int main(void) {
   memset(audiocallback_bufin, 0, sizeof(audiocallback_bufin));
   memset(audiocallback_bufout, 0, sizeof(audiocallback_bufout));
 
-  print_timer.Init(1.0f, AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE);
+  print_timer.Init(10.0f, AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE);
 
   System::Delay(2000);
 
   hw.SetAudioBlockSize(AUDIO_BLOCK_SIZE);
   hw.StartAudio(AudioCallback);
+  hw.StartAdc();
 
   while (1) {
   }
