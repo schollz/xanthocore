@@ -11,7 +11,8 @@
 #endif
 
 using namespace softcut;
-Voice voice;
+#define NUM_VOICES 1
+Voice voices[NUM_VOICES];
 FadeCurves fadeCurves;
 bool button1Pressed = false;
 #ifdef INCLUDE_FVERB3
@@ -66,7 +67,10 @@ static void AudioCallback(AudioHandle::InterleavingInputBuffer in,
   }
 
   // Process with Voice (only processing left channel here)
-  voice.processBlockMono(inl, outl, AUDIO_BLOCK_SIZE);
+  for (size_t i = 0; i < NUM_VOICES; i++) {
+    voices[i].processBlockMono(inl, outl, AUDIO_BLOCK_SIZE);
+    break;
+  }
 
 #ifdef INCLUDE_FVERB3
   fverb3.compute(AUDIO_BLOCK_SIZE, inl, inr, outl, outr);
@@ -82,13 +86,15 @@ static void AudioCallback(AudioHandle::InterleavingInputBuffer in,
     // print hello
 
     daisyseed.PrintLine("cpu needed: %2.1f, %2.1f, %2.1f, %d", cpu_needed,
-                        voice.getSavedPosition(), hw.knob1.Process(),
+                        voices[0].getSavedPosition(), hw.knob1.Process(),
                         button1Pressed);
     if (button1Pressed) {
-      voice.cutToPos(1.5);
+      voices[0].cutToPos(1.5);
       button1Pressed = false;
     }
-    voice.setRate(hw.knob1.Process() * 2 - 1);
+    voices[0].setRate(hw.knob1.Process() * 2 - 1);
+    // voices[1].setRate((hw.knob1.Process() * 2 - 1) / 2);
+    // voices[2].setRate((hw.knob1.Process() * 2 - 1) * 2);
   }
 
 #ifdef INCLUDE_AUDIO_PROFILING
@@ -107,22 +113,24 @@ int main(void) {
   fverb3.init(AUDIO_SAMPLE_RATE);
 #endif
   // fadeCurves.init();
-  voice.reset();
-  voice.setBuffer(tape_linear_buffer, MAX_SIZE);
-  voice.setSampleRate(AUDIO_SAMPLE_RATE);
-  voice.setRate(1.0);
-  voice.setLoopStart(1.0);
-  voice.setLoopEnd(2.0);
-  voice.setLoopFlag(true);
-  voice.setFadeTime(0.1);
-  voice.setRecLevel(1.0);
-  voice.setPreLevel(0.5);
-  voice.setRecFlag(true);
-  voice.setRecOnceFlag(false);
-  voice.setPlayFlag(true);
-  voice.cutToPos(1.0);
-  voice.setRecPreSlewTime(0.5);
-  voice.setRateSlewTime(0.5);
+  for (int i = 0; i < NUM_VOICES; i++) {
+    voices[i].reset();
+    voices[i].setBuffer(tape_linear_buffer, MAX_SIZE);
+    voices[i].setSampleRate(AUDIO_SAMPLE_RATE);
+    voices[i].setRate(1.0);
+    voices[i].setLoopStart(1.0);
+    voices[i].setLoopEnd(2.0);
+    voices[i].setLoopFlag(true);
+    voices[i].setFadeTime(0.1);
+    voices[i].setRecLevel(1.0);
+    voices[i].setPreLevel(0.5);
+    voices[i].setRecFlag(true);
+    voices[i].setRecOnceFlag(false);
+    voices[i].setPlayFlag(true);
+    voices[i].cutToPos(1.0);
+    voices[i].setRecPreSlewTime(0.5);
+    voices[i].setRateSlewTime(0.5);
+  }
 
 #ifdef INCLUDE_AUDIO_PROFILING
   // setup measurement
