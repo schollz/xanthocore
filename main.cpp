@@ -13,6 +13,7 @@
 using namespace softcut;
 Voice voice;
 FadeCurves fadeCurves;
+bool button1Pressed = false;
 #ifdef INCLUDE_FVERB3
 FVerb3 fverb3;
 #endif
@@ -79,8 +80,14 @@ static void AudioCallback(AudioHandle::InterleavingInputBuffer in,
 
   if (print_timer.Process()) {
     // print hello
-    daisyseed.PrintLine("cpu needed: %2.1f, %2.1f, %2.1f", cpu_needed,
-                        voice.getSavedPosition(), hw.knob1.Process());
+
+    daisyseed.PrintLine("cpu needed: %2.1f, %2.1f, %2.1f, %d", cpu_needed,
+                        voice.getSavedPosition(), hw.knob1.Process(),
+                        button1Pressed);
+    if (button1Pressed) {
+      voice.cutToPos(1.5);
+      button1Pressed = false;
+    }
     voice.setRate(hw.knob1.Process() * 2 - 1);
   }
 
@@ -139,5 +146,9 @@ int main(void) {
   hw.StartAdc();
 
   while (1) {
+    hw.ProcessDigitalControls();
+    if (hw.button1.RisingEdge()) {
+      button1Pressed = true;
+    }
   }
 }
