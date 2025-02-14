@@ -1,0 +1,36 @@
+
+# Project Name
+TARGET = ouroboros
+
+USE_DAISYSP_LGPL = 1
+
+APP_TYPE=BOOT_QSPI
+# without BOOT_SRAM: make program
+# with BOOT_SRAM:
+# hold boot, press reset and then
+# > make program-boot
+# press reset and then quickly press boot
+# > make program-dfu
+
+# Sources
+CPP_SOURCES = main.cpp \
+	lib/softcut/FadeCurves.cpp \
+	lib/softcut/ReadWriteHead.cpp \
+	lib/softcut/SubHead.cpp \
+	lib/softcut/Svf.cpp \
+	lib/softcut/Voice.cpp
+
+
+# Library Locations
+LIBDAISY_DIR = libDaisy
+DAISYSP_DIR = DaisySP
+USE_FATFS = 1
+LDFLAGS += -u _printf_float
+
+# Compiler Flags
+CXXFLAGS += $(INCLUDES)
+# Core location, and generic Makefile.
+SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
+include $(SYSTEM_FILES_DIR)/Makefile
+
+

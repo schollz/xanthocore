@@ -1,34 +1,13 @@
 
-# Project Name
-TARGET = ouroboros
+building:
+	LD_LIBRARY_PATH=$(HOME)/bin/gcc-arm-none-eabi-10-2020-q4-major/arm-none-eabi/lib:$$LD_LIBRARY_PATH \
+	PATH=$(HOME)/bin/gcc-arm-none-eabi-10-2020-q4-major/bin:$$PATH \
+	/usr/bin/make -f ./Makefile.1 -j32
 
-USE_DAISYSP_LGPL = 1
-
-APP_TYPE=BOOT_QSPI
-# without BOOT_SRAM: make program
-# with BOOT_SRAM:
-# hold boot, press reset and then
-# > make program-boot
-# press reset and then quickly press boot
-# > make program-dfu
-
-# Sources
-CPP_SOURCES = main.cpp \
-	FadeCurves.cpp \
-	ReadWriteHead.cpp \
-	SubHead.cpp \
-	Svf.cpp \
-	Voice.cpp
-
-
-# Library Locations
-LIBDAISY_DIR = libDaisy
-DAISYSP_DIR = DaisySP
-USE_FATFS = 1
-LDFLAGS += -u _printf_float
-
-# Compiler Flags
-CXXFLAGS += $(INCLUDES)
-# Core location, and generic Makefile.
-SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
-include $(SYSTEM_FILES_DIR)/Makefile
+upload:
+	/usr/bin/make -f ./Makefile.1 program-dfu 
+	
+prereqs:
+	git submodule update --init --recursive
+	cd DaisySP && make -j32
+	cd libDaisy && make -j32

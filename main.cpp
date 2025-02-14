@@ -5,7 +5,7 @@
 #include "daisy_pod.h"
 #include "daisysp.h"
 //
-#include "Voice.h"
+#include "lib/softcut/Voice.h"
 #ifdef INCLUDE_FVERB3
 #include "lib/fverb3.h"
 #endif
