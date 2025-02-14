@@ -64,8 +64,6 @@ int main() {
     voices[i].setLoopEnd(3.0);
     voices[i].setLoopFlag(true);
     voices[i].setFadeTime(0.1);
-    voices[i].setRecLevel(0.0);
-    voices[i].setPreLevel(0.0);
     if (i == 0) {
       voices[i].setRecFlag(true);
     }
@@ -74,21 +72,20 @@ int main() {
     voices[i].cutToPos(1.0);
     voices[i].setRecPreSlewTime(0.5);
     voices[i].setRateSlewTime(1.5);
-    voices[i].setRecOffset(-0.005);
+    voices[i].setRecOffset(0.005);
+    voices[0].setRecLevel(1.0);
+    voices[0].setPreLevel(0.5);
   }
 
   float sample;
   int index = 0;
   while (inFile.read(reinterpret_cast<char*>(&sample), sizeof(float))) {
     if (index++ == 48000) {
-      voices[0].setRecLevel(0);
-      voices[0].setPreLevel(1.0);
-    } else if (index == 1) {
-      voices[0].setRecLevel(1.0);
-      voices[0].setPreLevel(0.5);
+      voices[0].setRecLevel(0.0);
+      voices[0].setPreLevel(0.75);
     } else if (index == 96000 + 24000) {
-      voices[0].setLoopEnd(1.5);
-      voices[0].setRate(-0.25);
+      voices[0].setLoopEnd(3.5);
+      voices[0].setRate(1);
       voices[1].setRate(2.13);
     }
     float processedSample = processSample(sample);
