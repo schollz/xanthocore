@@ -7,7 +7,8 @@ SOFTCUT_SRC = ../../lib/softcut/FadeCurves.cpp \
               ../../lib/softcut/ReadWriteHead.cpp \
               ../../lib/softcut/SubHead.cpp \
               ../../lib/softcut/Svf.cpp \
-              ../../lib/softcut/Voice.cpp
+              ../../lib/softcut/Voice.cpp \
+			  ../../lib/barcode/Barcode.cpp
 
 # Object files
 SOFTCUT_OBJ = $(SOFTCUT_SRC:.cpp=.o)
@@ -17,7 +18,7 @@ all: build
 
 # Convert FLAC to raw float
 output.raw:
-	sox fss_ecv2_138_vocal_phrase_wet_let_me_show_you_low_Cm_key_bpm200_138_beats16_.flac -c 1 -b 32 -e float output.raw
+	sox fss_ecv2_138_vocal_phrase_wet_let_me_show_you_low_Cm_key_bpm200_138_beats16_.flac -r 48000 -c 2 -b 16 -e float  output.raw
 
 # Compile Softcut sources into object files
 ../../lib/softcut/%.o: ../../lib/softcut/%.cpp
@@ -30,7 +31,8 @@ main: main.cpp $(SOFTCUT_OBJ)
 # Build everything
 build: output.raw main
 	./main
-	sox -r 48000 -c 1 -b 32 -e float -L processed.raw processed.wav
+	sox -r 48000 -c 2 -b 32 -e float  output.raw unprocessed.wav
+	sox -r 48000 -c 2 -b 32 -e float  processed.raw processed.wav
 
 # Play processed audio
 play: build
