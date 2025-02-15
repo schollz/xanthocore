@@ -8,3 +8,5 @@ unprocessed.wav
 .waf*
 .lock*
 main
+**1.wav
+**out.wav

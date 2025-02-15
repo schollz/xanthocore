@@ -149,9 +149,9 @@ void Voices::process(const float *inl, const float *inr, float *outl,
       outr[j] += output[j] * panningR[i];
     }
   }
-  // add in the inputs
-  for (size_t i = 0; i < numFrames; i++) {
-    outl[i] += inl[i] / NUM_VOICES;
-    outr[i] += inr[i] / NUM_VOICES;
-  }
+  // // TODO: add wet/dry mix
+  // for (size_t i = 0; i < numFrames; i++) {
+  //   outl[i] += inl[i] / NUM_VOICES;
+  //   outr[i] += inr[i] / NUM_VOICES;
+  // }
 }

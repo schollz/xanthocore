@@ -5,15 +5,10 @@
 #include "daisy_pod.h"
 #include "daisysp.h"
 //
-#include "lib/softcut/Voice.h"
 #ifdef INCLUDE_FVERB3
 #include "lib/fverb3.h"
 #endif
 
-using namespace softcut;
-#define NUM_VOICES 4
-Voice voices[NUM_VOICES];
-FadeCurves fadeCurves;
 bool button1Pressed = false;
 #ifdef INCLUDE_FVERB3
 FVerb3 fverb3;
@@ -36,7 +31,9 @@ using namespace daisysp;
 
 DaisyPod hw;
 DaisySeed daisyseed;
-Metro print_timer;
+Metro metroPrintTimer;
+Metro metroUpdateControls;
+
 float DSY_SDRAM_BSS tape_linear_buffer[MAX_SIZE];
 
 size_t audiocallback_sample_num = 0;
@@ -45,8 +42,6 @@ float cpu_max_needed = 0.0f;
 uint32_t audiocallback_time_needed = 0;
 float cpu_usage_running[30] = {0};
 size_t cpu_usage_index = 0;
-float audiocallback_bufin[AUDIO_BLOCK_SIZE * 2];
-float audiocallback_bufout[AUDIO_BLOCK_SIZE * 2];
 float inl[AUDIO_BLOCK_SIZE];
 float inr[AUDIO_BLOCK_SIZE];
 float outl[AUDIO_BLOCK_SIZE];
@@ -66,11 +61,6 @@ static void AudioCallback(AudioHandle::InterleavingInputBuffer in,
     inr[i / 2] = in[i + 1];  // Right channel
   }
 
-  // Process with Voice (only processing left channel here)
-  for (size_t i = 0; i < NUM_VOICES; i++) {
-    voices[i].processBlockMono(inl, outl, AUDIO_BLOCK_SIZE);
-  }
-
 #ifdef INCLUDE_FVERB3
   fverb3.compute(AUDIO_BLOCK_SIZE, inl, inr, outl, outr);
 #endif
@@ -81,21 +71,11 @@ static void AudioCallback(AudioHandle::InterleavingInputBuffer in,
     out[i + 1] = outl[i / 2] / 2;  // Duplicate left channel to right
   }
 
-  if (print_timer.Process()) {
+  if (metroPrintTimer.Process()) {
     // print hello
 
-    // daisyseed.PrintLine("cpu needed: %2.1f, %2.1f, %2.1f, %d", cpu_needed,
-    //                     voices[0].getSavedPosition(), hw.knob1.Process(),
-    //                     button1Pressed);
-    if (button1Pressed) {
-      voices[0].cutToPos(1.5);
-      voices[1].cutToPos(1.15);
-      button1Pressed = false;
-    }
-    voices[0].setRate(hw.knob1.Process() * 2 - 1);
-    voices[1].setRate((hw.knob1.Process() * 2 - 1) / 1.5);
-    voices[2].setRate((hw.knob1.Process() * 2 - 1) * 1.5);
-    voices[3].setRate((hw.knob1.Process() * 2 - 1) + 0.25);
+    daisyseed.PrintLine("cpu needed: %2.1f ", cpu_needed);
+  } else if (metroUpdateControls.Process()) {
   }
 
 #ifdef INCLUDE_AUDIO_PROFILING
@@ -117,30 +97,6 @@ int main(void) {
   // clear tape_linear_buffer
   memset(tape_linear_buffer, 0, sizeof(tape_linear_buffer));
 
-  // fadeCurves.init();
-  for (int i = 0; i < NUM_VOICES; i++) {
-    voices[i].reset();
-    voices[i].setBuffer(tape_linear_buffer, MAX_SIZE);
-    voices[i].setSampleRate(AUDIO_SAMPLE_RATE);
-    voices[i].setRate(1.0);
-    voices[i].setLoopStart(1.0);
-    voices[i].setLoopEnd(3.0);
-    if (i > 0) {
-      voices[i].setLoopEnd(2.5);
-    }
-    voices[i].setLoopFlag(true);
-    voices[i].setFadeTime(0.1);
-    voices[i].setRecLevel(1.0);
-    voices[i].setPreLevel(0.75);
-    voices[i].setRecFlag(true);
-    voices[i].setRecOnceFlag(false);
-    voices[i].setPlayFlag(true);
-    voices[i].cutToPos(1.0);
-    voices[i].setRecPreSlewTime(0.5);
-    voices[i].setRateSlewTime(0.5);
-    voices[i].setRecOffset(0.005);
-  }
-
 #ifdef INCLUDE_AUDIO_PROFILING
   // setup measurement
   // https://forum.electro-smith.com/t/solved-how-to-do-mcu-utilization-measurements/1236
@@ -150,13 +106,8 @@ int main(void) {
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 #endif
 
-  // erase buf
-  memset(audiocallback_bufin, 0, sizeof(audiocallback_bufin));
-  memset(audiocallback_bufout, 0, sizeof(audiocallback_bufout));
-
-  print_timer.Init(10.0f, AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE);
-
-  System::Delay(2000);
+  metroPrintTimer.Init(1.0f, AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE);
+  metroUpdateControls.Init(30.0f, AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE);
 
   hw.SetAudioBlockSize(AUDIO_BLOCK_SIZE);
   hw.StartAudio(AudioCallback);
@@ -164,8 +115,19 @@ int main(void) {
 
   while (1) {
     hw.ProcessDigitalControls();
-    if (hw.button1.RisingEdge()) {
+    // update controls
+    if (hw.button1.RisingEdge() && !button1Pressed) {
+      // print
+      daisyseed.PrintLine("button1 pressed");
       button1Pressed = true;
+      hw.led1.Set(0, 1, 0);
+      hw.UpdateLeds();
+    } else if (hw.button1.RisingEdge() && button1Pressed) {
+      daisyseed.PrintLine("button1 released");
+      button1Pressed = false;
+      hw.led1.Set(0, 0, 0);
+      hw.UpdateLeds();
     }
+    System::Delay(6);
   }
 }
