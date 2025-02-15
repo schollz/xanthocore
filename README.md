@@ -1,5 +1,21 @@
 # daisy-softcut
 
+## dev 
+
+###  upload
+
+Press the `RESET` button on the Daisy Seed and then run the following:
+
+```bash
+make upload
+```
+
+### debug
+
+```bash
+make debug
+```
+
 ## prequisites
 
 Install libusb
@@ -45,29 +61,4 @@ unzip gcc-arm-none-eabi-10-2020-q4-major.zip
 rm gcc-arm-none-eabi-10-2020-q4-major.zip
 ```
 
-Export the path to the `arm-none-eabi-gcc`:
 
-```bash
-export LD_LIBRARY_PATH=$HOME/bin/gcc-arm-none-eabi-10-2020-q4-major/arm-none-eabi/lib:$LD_LIBRARY_PATH
-sudo ldconfig
-export PATH=~/bin/gcc-arm-none-eabi-10-2020-q4-major/bin:$PATH
-```
-
-## cloning
-
-```bash
-git clone https://github.com/schollz/daisy1
-cd daisy1
-git submodule update --init --recursive 
-cd libDaisy && make all -j8
-cd DaisySP && make all -j8
-```
-
-
-## Uploading
-
-Press the `RESET` button on the Daisy Seed and then run the following:
-
-```bash
-make && make program-dfu
-```
