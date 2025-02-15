@@ -1,7 +1,10 @@
-build/*
-tests/softcut/main
-tests/softcut/output.raw
-tests/softcut/processed.raw
-tests/softcut/processed.wav
-tests/softcut/unprocessed.wav
+**/build/**
+**/build*
+output.raw
+processed.raw
+processed.wav
+unprocessed.wav
 *.o
+.waf*
+.lock*
+main
