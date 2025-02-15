@@ -9,6 +9,8 @@ using namespace softcut;
 Voices::Voices() {}
 
 void Voices::init(float *tape, unsigned int numFrames, float sr) {
+  // erase tape
+  memset(tape, 0, numFrames * sizeof(float));
   bufFrames = numFrames;
   sampleRate = sr;
 
@@ -22,13 +24,13 @@ void Voices::init(float *tape, unsigned int numFrames, float sr) {
     voices[i].setSampleRate(sampleRate);
     voices[i].setRate(1.0);
     voices[i].setFadeTime(0.1);
-    voices[i].setRecLevel(1.0);
-    voices[i].setPreLevel(0.75);
+    voices[i].setRecLevel(0.0);
+    voices[i].setPreLevel(1.0);
     voices[i].setRecPreSlewTime(0.5);
     voices[i].setRateSlewTime(0.5);
     voices[i].cutToPos(1.0f);
     voices[i].setRecOnceFlag(false);
-    voices[i].setLoopFlag(false);
+    voices[i].setLoopFlag(true);
     voices[i].setRecFlag(false);
     voices[i].setPlayFlag(false);
     setTape(i, i);
