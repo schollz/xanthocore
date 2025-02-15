@@ -1,0 +1,40 @@
+# wscript
+top = "."
+out = "build"
+
+
+def options(opt):
+    opt.load("compiler_cxx")
+
+
+def configure(conf):
+    conf.load("compiler_cxx")
+
+
+def build(bld):
+    # Source files
+    softcut_src = [
+        "../../lib/softcut/FadeCurves.cpp",
+        "../../lib/softcut/ReadWriteHead.cpp",
+        "../../lib/softcut/SubHead.cpp",
+        "../../lib/softcut/Svf.cpp",
+        "../../lib/softcut/Voice.cpp",
+        "../../lib/softcut/Voices.cpp",
+        "../../lib/barcode/Barcode.cpp",
+        "../../lib/dsp/Oscillator.cpp",
+    ]
+
+    # Compile the library
+    bld.objects(
+        source=softcut_src,
+        includes=[
+            "../../lib/softcut",
+            "../../lib/barcode",
+            "../../lib/dsp",
+        ],
+        target="softcut",
+        cxxflags="-O2 -Wall",
+    )
+
+    # Compile main program
+    bld.program(source="main.cpp", target="main", use="softcut", cxxflags="-O2 -Wall")
