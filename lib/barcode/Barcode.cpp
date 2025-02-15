@@ -13,11 +13,13 @@ void Barcode::init(float *tape, unsigned int numFrames, float sr,
     voices.setRecOnceFlag(i, false);
     voices.setPreLevel(i, 1.0);
     voices.setRecLevel(i, 0.0);
-    voices.setRate(i, 1.0);
     voices.setLoopStart(i, 0.0);
     voices.setLoopEnd(i, 2.0);
+    voices.setFadeTime(i, xfadeSeconds);
     voices.setRecPreSlewTime(i, xfadeSeconds);
     voices.cutToPos(i, 0.0);
+    voices.setLevel(i, 0);
+    voices.setRate(i, rates[i]);
   }
   // set first voice to prime it to record
   voices.setRecFlag(0, true);
@@ -38,10 +40,11 @@ void Barcode::init(float *tape, unsigned int numFrames, float sr,
 
 void Barcode::ToggleRecording(bool on) {
   if (on && !recording) {
-    voices.cutToPos(0);
     voices.setRate(0, 1.0);
     voices.setRecLevel(0, 1.0);
     voices.setPreLevel(0, 1.0);
+    voices.cutToPos(0);
+    voices.setLoopEnd(60);
     barcoding = false;
   } else if (!on && recording) {
     voices.setRecLevel(0, 0.0);
@@ -60,33 +63,30 @@ void Barcode::process(const float *inl, const float *inr, float *outl,
       voices.setPan(i, osc[i][LFO_PAN].Value());
       voices.setDB(i, dbs[i] + linlin(osc[i][LFO_AMP].Value(), -1.0f, 1.0f,
                                       -48.0, 0.0f));
-      // bool forward = osc[i][LFO_DIRECTION].Value() > 0;
-      // if (forward) {
-      //   voices.setRate(i, rates[i]);
-      // } else {
-      //   voices.setRate(i, -1 * rates[i]);
-      // }
-      // float start =
-      //     linlin(osc[i][LFO_START].Value(), -1.0f, 1.0f, 0.0f,
-      //     recordingStop);
-      // voices.setLoopStart(i, start);
-      // float length = linlin(osc[i][LFO_LENGTH].Value(), -1.0f, 1.0f, 0.1f,
-      //                       (recordingStop - start) / 2);
-      // float end = start + length;
-      // if (end > recordingStop) {
-      //   end = recordingStop;
-      // }
-      // voices.setLoopEnd(i, end);
-      // float pos = voices.getSavedPosition(i);
-      // print position, start, end, pan, of each voice
-      // std::cout << "Voice: " << i << " Position: " << pos << std::endl;
-      // if (pos > end || pos < start) {
-      //   voices.cutToPos(i, (start + end) / 2.0f);
-      // }
+      bool forward = osc[i][LFO_DIRECTION].Value() > 0;
+      if (forward) {
+        voices.setRate(i, rates[i]);
+      } else {
+        voices.setRate(i, -1 * rates[i]);
+      }
+      float start =
+          linlin(osc[i][LFO_START].Value(), -1.0f, 1.0f, 0.0f, recordingStop);
+      voices.setLoopStart(i, start);
+      float length = linlin(osc[i][LFO_LENGTH].Value(), -1.0f, 1.0f, 0.1f,
+                            (recordingStop - start) / 2);
+      float end = start + length;
+      if (end > recordingStop) {
+        end = recordingStop;
+      }
+      voices.setLoopEnd(i, end);
+      float pos = voices.getSavedPosition(i);
+      //   print position, start, end, pan, of each voice
+      //   std::cout << "Voice: " << i << " Position: " << pos << std::endl;
+      if (pos > end || pos < start) {
+        voices.cutToPos(i, (start + end) / 2.0f);
+      }
     }
   }
-  std::cout << "Voice: " << 0 << " Position: " << voices.getSavedPosition(0)
-            << std::endl;
   // fade out the voice and set it
   if (xfadeSamplesWait > 0) {
     xfadeSamplesWait -= numFrames;

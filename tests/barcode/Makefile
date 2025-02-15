@@ -10,11 +10,14 @@ build:
 
 # Convert FLAC to raw float
 output.raw:
-	sox fss_ecv2_138_vocal_phrase_wet_let_me_show_you_low_Cm_key_bpm200_138_beats16_.flac -r 48000 -c 2 -b 16 -e float  output.raw
+	# sox fss_ecv2_138_vocal_phrase_wet_let_me_show_you_low_Cm_key_bpm200_138_beats16_.flac 1.wav pad 0 30
+	sox strega.mp3 -r 48000 1.wav 
+	sox 1.wav -r 48000 -c 2 -b 16 -e float output.raw
 
 # Play processed audio
 play: all
-	play processed.wav
+	sox processed.wav out.wav reverb 50 50 100 100 0 0 norm 	
+	play out.wav
 
 # Clean up
 clean:

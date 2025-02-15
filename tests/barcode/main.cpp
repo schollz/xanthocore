@@ -61,7 +61,7 @@ int main() {
       index++;
       if (index == 1) {
         barcode.ToggleRecording(true);
-      } else if (index == 48000) {
+      } else if (index == 5.5 * 48000) {
         barcode.ToggleRecording(false);
       }
     }

@@ -59,11 +59,23 @@ void Voices::setLoopStart(size_t voice, float sec) {
 }
 
 void Voices::setLoopEnd(size_t voice, float sec) {
+  if (sec > tapeSliceEnd[voice] - tapeSliceStart[voice]) {
+    sec = tapeSliceEnd[voice] - tapeSliceStart[voice];
+  }
   loopEnd[voice] = sec;
+  std::cout << "loopEnd: " << loopEnd[voice] + tapeSliceStart[voice]
+            << std::endl;
   voices[voice].setLoopEnd(loopEnd[voice] + tapeSliceStart[voice]);
 }
 
+void Voices::setLoopEnd(float sec) {
+  for (size_t i = 0; i < NUM_VOICES; i++) {
+    setLoopEnd(i, sec);
+  }
+}
+
 void Voices::cutToPos(size_t voice, float sec) {
+  std::cout << "cutToPos: (abs) " << sec + tapeSliceStart[voice] << std::endl;
   voices[voice].cutToPos(sec + tapeSliceStart[voice]);
 }
 
@@ -126,17 +138,20 @@ void Voices::process(const float *inl, const float *inr, float *outl,
     }
     float output[numFrames];
     memset(output, 0, numFrames * sizeof(float));
-    if (i == 1) {
-      if (inputBus[i] == 0) {
-        voices[i].processBlockMono(inl, output, numFrames);
-      } else {
-        voices[i].processBlockMono(inr, output, numFrames);
-      }
+    if (inputBus[i] == 0) {
+      voices[i].processBlockMono(inl, output, numFrames);
+    } else {
+      voices[i].processBlockMono(inr, output, numFrames);
     }
     for (size_t j = 0; j < numFrames; j++) {
       output[j] *= levels[i];
       outl[j] += output[j] * panningL[i];
       outr[j] += output[j] * panningR[i];
     }
+  }
+  // add in the inputs
+  for (size_t i = 0; i < numFrames; i++) {
+    outl[i] += inl[i] / NUM_VOICES;
+    outr[i] += inr[i] / NUM_VOICES;
   }
 }
