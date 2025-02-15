@@ -21,4 +21,4 @@ play: all
 
 # Clean up
 clean:
-	rm -rf build unprocessed.wav output.raw processed.raw processed.wav .waf* .lock*
+	rm -rf build unprocessed.wav output.raw processed.raw processed.wav .waf* .lock* out.wav 1.wav
