@@ -11,8 +11,8 @@ upload:
 
 prereqs:
 	git submodule update --init --recursive
-	cd DaisySP && make -j$(CORES)
-	cd libDaisy && make -j$(CORES)
+	cd lib/DaisySP && make -j$(CORES)
+	cd lib/libDaisy && make -j$(CORES)
 
 clean:
 	/usr/bin/make -f ./Makefile.1 clean
