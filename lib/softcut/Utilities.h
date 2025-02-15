@@ -44,6 +44,11 @@ inline float fmin(float a, float b) {
   return r;
 }
 
+inline float linlin(float in, float inMin, float inMax, float outMin,
+                    float outMax) {
+  return (in - inMin) / (inMax - inMin) * (outMax - outMin) + outMin;
+}
+
 /** quick fp clamp
  */
 inline float fclamp(float in, float min, float max) {

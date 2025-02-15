@@ -17,6 +17,11 @@ class Voices {
   void setPan(size_t voice, float pan);
   void setLoopStart(size_t voice, float sec);
   void setLoopEnd(size_t voice, float sec);
+  void setLoopEnd(float sec) {
+    for (size_t i = 0; i < NUM_VOICES; i++) {
+      setLoopEnd(i, sec);
+    }
+  }
   void setLoopFlag(size_t voice, bool val);
   void setRecFlag(size_t voice, bool val);
   void setRecOnceFlag(size_t voice, bool val);
@@ -24,6 +29,14 @@ class Voices {
   void setPreLevel(size_t voice, float val);
   void setRecLevel(size_t voice, float val);
   void cutToPos(size_t voice, float sec);
+  void cutToPos(float sec);
+  void setRecPreSlewTime(size_t voice, float d) {
+    voices[voice].setRecPreSlewTime(d);
+  }
+  void setRateSlewTime(size_t voice, float d) {
+    voices[voice].setRateSlewTime(d);
+  }
+  float getSavedPosition(size_t voice);
   void process(const float *inl, const float *inr, float *outl, float *outr,
                unsigned int numFrames);
 

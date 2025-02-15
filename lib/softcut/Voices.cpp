@@ -28,7 +28,6 @@ void Voices::init(float *tape, unsigned int numFrames, float sr) {
     voices[i].setPreLevel(1.0);
     voices[i].setRecPreSlewTime(0.5);
     voices[i].setRateSlewTime(0.5);
-    voices[i].cutToPos(1.0f);
     voices[i].setRecOnceFlag(false);
     voices[i].setLoopFlag(true);
     voices[i].setRecFlag(false);
@@ -45,7 +44,8 @@ void Voices::init(float *tape, unsigned int numFrames, float sr) {
 void Voices::setTape(size_t voice, size_t index) {
   float totalSeconds = (float)bufFrames / (float)sampleRate;
   totalSeconds = totalSeconds - (VOICES_TAPE_BUFFER * 2);
-  tapeSliceStart[voice] = (float)index / (float)NUM_VOICES * totalSeconds;
+  tapeSliceStart[voice] =
+      VOICES_TAPE_BUFFER + (float)index / (float)NUM_VOICES * totalSeconds;
   tapeSliceEnd[voice] = (float)(index + 1) / (float)NUM_VOICES * totalSeconds;
   setLoopStart(voice, loopStart[voice]);
   setLoopEnd(voice, loopEnd[voice]);
@@ -55,18 +55,26 @@ void Voices::setRate(size_t voice, float rate) { voices[voice].setRate(rate); }
 
 void Voices::setLoopStart(size_t voice, float sec) {
   loopStart[voice] = sec;
-  float start = VOICES_TAPE_BUFFER + loopStart[voice] + tapeSliceStart[voice];
-  voices[voice].setLoopStart(start);
+  voices[voice].setLoopStart(loopStart[voice] + tapeSliceStart[voice]);
 }
 
 void Voices::setLoopEnd(size_t voice, float sec) {
   loopEnd[voice] = sec;
-  voices[voice].setLoopEnd(VOICES_TAPE_BUFFER + loopEnd[voice] +
-                           tapeSliceStart[voice]);
+  voices[voice].setLoopEnd(loopEnd[voice] + tapeSliceStart[voice]);
 }
 
 void Voices::cutToPos(size_t voice, float sec) {
-  voices[voice].cutToPos(3 + sec + tapeSliceStart[voice]);
+  voices[voice].cutToPos(sec + tapeSliceStart[voice]);
+}
+
+void Voices::cutToPos(float sec) {
+  for (size_t i = 0; i < NUM_VOICES; i++) {
+    cutToPos(i, sec);
+  }
+}
+
+float Voices::getSavedPosition(size_t voice) {
+  return voices[voice].getSavedPosition() - tapeSliceStart[voice];
 }
 
 void Voices::setLoopFlag(size_t voice, bool val) {
@@ -118,7 +126,7 @@ void Voices::process(const float *inl, const float *inr, float *outl,
     }
     float output[numFrames];
     memset(output, 0, numFrames * sizeof(float));
-    if (i == 0) {
+    if (i == 1) {
       if (inputBus[i] == 0) {
         voices[i].processBlockMono(inl, output, numFrames);
       } else {
