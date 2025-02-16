@@ -11,7 +11,7 @@ https://opensource.org/license/lgpl-2-1/
 #ifndef DSYSP_Reverb2_H
 #define DSYSP_Reverb2_H
 
-#define DSY_Reverb2_MAX_SIZE 98936
+#define DSY_Reverb2_MAX_SIZE (98936 / 4)
 
 /**Delay line for internal reverb use
  */

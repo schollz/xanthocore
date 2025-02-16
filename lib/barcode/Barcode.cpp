@@ -1,4 +1,7 @@
 #include "Barcode.h"
+
+#include <time.h>
+
 void Barcode::init(float *tape, unsigned int numFrames, float sr,
                    float audioblockSize) {
   // seed randomness
@@ -66,7 +69,7 @@ void Barcode::process(const float *inl, const float *inr, float *outl,
       }
       voices.setPan(i, osc[i][LFO_PAN].Value());
       voices.setDB(i, dbs[i] + linlin(osc[i][LFO_AMP].Value(), -1.0f, 1.0f,
-                                      -48.0, 0.0f));
+                                      -12.0, 0.0f));
       bool forward = osc[i][LFO_DIRECTION].Value() > 0;
       if (forward) {
         voices.setRate(i, rates[i]);
@@ -85,7 +88,6 @@ void Barcode::process(const float *inl, const float *inr, float *outl,
       voices.setLoopEnd(i, end);
       float pos = voices.getSavedPosition(i);
       //   print position, start, end, pan, of each voice
-      //   std::cout << "Voice: " << i << " Position: " << pos << std::endl;
       if (pos > end || pos < start) {
         voices.cutToPos(i, (start + end) / 2.0f);
       }
@@ -100,7 +102,6 @@ void Barcode::process(const float *inl, const float *inr, float *outl,
       // set the loop end point
       recordingStop = voices.getSavedPosition(0) - xfadeSeconds;
       // print recording stop
-      std::cout << "Recording stop: " << recordingStop << std::endl;
       voices.setLoopEnd(recordingStop);
       // set all voices to random positions
       for (size_t i = 0; i < NUM_VOICES; i++) {

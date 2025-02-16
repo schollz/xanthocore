@@ -1,5 +1,5 @@
 
-// #define INCLUDE_FVERB3
+#define INCLUDE_FVERB3
 
 #include "core_cm7.h"
 #include "daisy_pod.h"
@@ -10,7 +10,9 @@
 #endif
 //
 #include "lib/barcode/Barcode.h"
+using namespace softcut;
 
+Barcode barcode;
 bool button1Pressed = false;
 #ifdef INCLUDE_FVERB3
 FVerb3 fverb3;
@@ -22,9 +24,9 @@ uint8_t DMA_BUFFER_MEM_SECTION buffer_spi[4];
 #define AUDIO_SAMPLE_RATE 48000
 #define CROSSFADE_PREROLL 4800
 #ifdef INCLUDE_FVERB3
-#define MAX_SIZE (8388608)
+#define MAX_SIZE (2 << 22)
 #else
-#define MAX_SIZE (8388608 * 2)
+#define MAX_SIZE (2 << 22)
 #endif
 #define CYCLES_AVAILBLE \
   1066666  // (400000000 * AUDIO_BLOCK_SIZE / AUDIO_SAMPLE_RATE)
@@ -35,6 +37,8 @@ DaisyPod hw;
 DaisySeed daisyseed;
 Metro metroPrintTimer;
 Metro metroUpdateControls;
+float reverbWet = 0.5;
+float reverbDry = 1.0 - reverbWet;
 
 float DSY_SDRAM_BSS tape_linear_buffer[MAX_SIZE];
 
@@ -61,22 +65,37 @@ static void AudioCallback(AudioHandle::InterleavingInputBuffer in,
   for (size_t i = 0; i < size; i += 2) {
     inl[i / 2] = in[i];      // Left channel
     inr[i / 2] = in[i + 1];  // Right channel
+    outl[i / 2] = 0;
+    outr[i / 2] = 0;
   }
 
+  barcode.process(inl, inr, outl, outr, AUDIO_BLOCK_SIZE);
+  for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+    inl[i] = outl[i];
+    inr[i] = outr[i];
+  }
 #ifdef INCLUDE_FVERB3
   fverb3.compute(AUDIO_BLOCK_SIZE, inl, inr, outl, outr);
 #endif
 
+  // for (unsigned int i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+  //   float outl_, outr_;
+  //   reverb.Process(outl[i], outr[i], &outl_, &outr_);
+  //   outl[i] = reverbWet * outl_ + reverbDry * outl[i];
+  //   outr[i] = reverbWet * outr_ + reverbDry * outr[i];
+  // }
+
   // Interleave output samples
   for (size_t i = 0; i < size; i += 2) {
-    out[i] = outl[i / 2] / 2;      // Left channel output
-    out[i + 1] = outl[i / 2] / 2;  // Duplicate left channel to right
+    out[i] = outl[i / 2];      // Left channel
+    out[i + 1] = outr[i / 2];  // Right channel
   }
 
   if (metroPrintTimer.Process()) {
     // print hello
 
-    daisyseed.PrintLine("cpu needed: %2.1f ", cpu_needed);
+    daisyseed.PrintLine("cpu needed: %2.1f %2.1f", cpu_needed,
+                        barcode.VoicePosition(0));
   } else if (metroUpdateControls.Process()) {
   }
 
@@ -108,13 +127,20 @@ int main(void) {
   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 #endif
 
-  metroPrintTimer.Init(1.0f, AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE);
+  metroPrintTimer.Init(10.0f, AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE);
   metroUpdateControls.Init(30.0f, AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE);
 
+  System::Delay(3000);
+  // print starting
+  daisyseed.PrintLine("Loading barcode...");
+  barcode.init(tape_linear_buffer, MAX_SIZE, AUDIO_SAMPLE_RATE,
+               AUDIO_BLOCK_SIZE);
+
+  daisyseed.PrintLine("Starting audio...");
   hw.SetAudioBlockSize(AUDIO_BLOCK_SIZE);
   hw.StartAudio(AudioCallback);
   hw.StartAdc();
-
+  daisyseed.PrintLine("Audio started");
   while (1) {
     hw.ProcessDigitalControls();
     // update controls
@@ -122,14 +148,22 @@ int main(void) {
       // print
       daisyseed.PrintLine("button1 pressed");
       button1Pressed = true;
-      hw.led1.Set(0, 1, 0);
-      hw.UpdateLeds();
+      hw.led1.Set(1, 0, 0);
+      barcode.ToggleRecording(true);
     } else if (hw.button1.RisingEdge() && button1Pressed) {
       daisyseed.PrintLine("button1 released");
       button1Pressed = false;
       hw.led1.Set(0, 0, 0);
-      hw.UpdateLeds();
+      barcode.ToggleRecording(false);
     }
+    if (barcode.Barcoding()) {
+      hw.led2.Set(0, 1, 0);
+    } else if (barcode.Recording()) {
+      hw.led2.Set(1, 0, 0);
+    } else {
+      hw.led2.Set(0, 0, 0);
+    }
+    hw.UpdateLeds();
     System::Delay(6);
   }
 }

@@ -21,7 +21,7 @@ def build(bld):
         "../../lib/softcut/Voice.cpp",
         "../../lib/softcut/Voices.cpp",
         "../../lib/barcode/Barcode.cpp",
-        "../../lib/dsp/Oscillator.cpp",
+        "../../lib/dsp/Oscillator2.cpp",
         "../../lib/reverb2/Reverb2.cpp",
     ]
 

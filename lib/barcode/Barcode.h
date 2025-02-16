@@ -29,6 +29,10 @@ class Barcode {
   void process(const float *inl, const float *inr, float *outl, float *outr,
                unsigned int numFrames);
 
+  bool Barcoding() { return barcoding; }
+  bool Recording() { return recording; }
+  float VoicePosition(size_t voice) { return voices.getSavedPosition(voice); }
+
  private:
   Voices voices;
   float recordingStop = 0;

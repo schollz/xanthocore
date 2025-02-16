@@ -63,8 +63,6 @@ void Voices::setLoopEnd(size_t voice, float sec) {
     sec = tapeSliceEnd[voice] - tapeSliceStart[voice];
   }
   loopEnd[voice] = sec;
-  std::cout << "loopEnd: " << loopEnd[voice] + tapeSliceStart[voice]
-            << std::endl;
   voices[voice].setLoopEnd(loopEnd[voice] + tapeSliceStart[voice]);
 }
 
@@ -75,7 +73,6 @@ void Voices::setLoopEnd(float sec) {
 }
 
 void Voices::cutToPos(size_t voice, float sec) {
-  std::cout << "cutToPos: (abs) " << sec + tapeSliceStart[voice] << std::endl;
   voices[voice].cutToPos(sec + tapeSliceStart[voice]);
 }
 
@@ -151,7 +148,7 @@ void Voices::process(const float *inl, const float *inr, float *outl,
   }
   // TODO: add wet/dry mix
   for (size_t i = 0; i < numFrames; i++) {
-    outl[i] += inl[i] / (NUM_VOICES + 1) * 0.5;
-    outr[i] += inr[i] / (NUM_VOICES + 1) * 0.5;
+    outl[i] += inl[i] / (NUM_VOICES + 1);
+    outr[i] += inr[i] / (NUM_VOICES + 1);
   }
 }
