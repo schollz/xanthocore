@@ -23,7 +23,7 @@ CPP_SOURCES = main.cpp \
 	lib/barcode/Barcode.cpp \
 	lib/softcut/Voices.cpp \
 	lib/softcut/Voice.cpp
-
+C_SOURCES = $(wildcard lib/libDaisy/Drivers/CMSIS/DSP/Source/*/*.c)
 
 # Library Locations
 LIBDAISY_DIR = lib/libDaisy

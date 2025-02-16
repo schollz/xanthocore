@@ -80,7 +80,7 @@ void Barcode::process(const float *inl, const float *inr, float *outl,
           linlin(osc[i][LFO_START].Value(), -1.0f, 1.0f, 0.0f, recordingStop);
       voices.setLoopStart(i, start);
       float length = linlin(osc[i][LFO_LENGTH].Value(), -1.0f, 1.0f, 0.1f,
-                            (recordingStop - start) / 2);
+                            recordingStop / 2);
       float end = start + length;
       if (end > recordingStop) {
         end = recordingStop;
@@ -89,7 +89,7 @@ void Barcode::process(const float *inl, const float *inr, float *outl,
       float pos = voices.getSavedPosition(i);
       //   print position, start, end, pan, of each voice
       if (pos > end || pos < start) {
-        voices.cutToPos(i, (start + end) / 2.0f);
+        voices.cutToPos(i, start + (end - start) / 2.0f);
       }
     }
   }

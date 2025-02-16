@@ -15,10 +15,11 @@ Compilation options: -lang cpp -i -light -nvi -ct 1 -cn FVerb3 -scn  -es 1 -mcd
 #define float float
 #endif
 
+#include <math.h>
+
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <math.h>
 
 #ifndef FAUSTCLASS
 #define FAUSTCLASS FVerb3
@@ -36,12 +37,11 @@ Compilation options: -lang cpp -i -light -nvi -ct 1 -cn FVerb3 -scn  -es 1 -mcd
 #endif
 
 class FVerb3SIG0 {
-
-private:
+ private:
   int iVec6[2];
   int iRec34[2];
 
-public:
+ public:
   int getNumInputsFVerb3SIG0() { return 0; }
   int getNumOutputsFVerb3SIG0() { return 1; }
 
@@ -94,8 +94,7 @@ float DSY_SDRAM_BSS fVec0_FVerb3[131072];
 float DSY_SDRAM_BSS ftbl0FVerb3SIG0_FVerb3[65536];
 
 class FVerb3 final {
-
-private:
+ private:
   int fSampleRate;
   float fConst0;
   float fConst1;
@@ -210,7 +209,7 @@ private:
   int iConst34;
   int iConst35;
 
-public:
+ public:
   FVerb3() {}
 
   //   void metadata(Meta *m) {
@@ -691,8 +690,14 @@ public:
       float fTemp2 = float(input1[i0]);
       fVec0_FVerb3[IOTA0 & 131071] = fTemp2 * fRec27[0];
       fRec28[0] = fSlow7 + fConst2 * fRec28[1];
+      // int iTemp3 =
+      //     std::min<int>(65536, std::max<int>(0, int(fConst0 * fRec28[0])));
       int iTemp3 =
-          std::min<int>(65536, std::max<int>(0, int(fConst0 * fRec28[0])));
+          (int(fConst0 * fRec28[0]) < 0)
+              ? 0
+              : ((int(fConst0 * fRec28[0]) > 65536) ? 65536
+                                                    : int(fConst0 * fRec28[0]));
+
       fRec26[0] =
           fVec0_FVerb3[(IOTA0 - iTemp3) & 131071] + fRec25[0] * fRec26[1];
       fRec23[0] = fRec26[0] * fTemp1 + fRec24[0] * fRec23[1];
