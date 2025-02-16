@@ -16,7 +16,7 @@ output.raw:
 
 # Play processed audio
 play: all
-	sox processed.wav out.wav reverb 50 50 100 100 0 0 norm 	
+	sox processed.wav out.wav norm 	
 	play out.wav
 
 # Clean up

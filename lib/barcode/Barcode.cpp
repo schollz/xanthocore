@@ -1,6 +1,8 @@
 #include "Barcode.h"
 void Barcode::init(float *tape, unsigned int numFrames, float sr,
                    float audioblockSize) {
+  // seed randomness
+  srand(time(NULL));
   xfadeSamples = xfadeSeconds * sr;
 
   voices.init(tape, numFrames, sr);
@@ -40,6 +42,7 @@ void Barcode::init(float *tape, unsigned int numFrames, float sr,
 
 void Barcode::ToggleRecording(bool on) {
   if (on && !recording) {
+    voices.setFadeTime(0.1);
     voices.setRate(0, 1.0);
     voices.setRecLevel(0, 1.0);
     voices.setPreLevel(0, 1.0);
@@ -48,6 +51,7 @@ void Barcode::ToggleRecording(bool on) {
     barcoding = false;
   } else if (!on && recording) {
     voices.setRecLevel(0, 0.0);
+    voices.setFadeTime(1.0);
     xfadeSamplesWait = xfadeSamples;
   }
   recording = on;

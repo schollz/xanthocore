@@ -27,6 +27,11 @@ class Voices {
   void cutToPos(size_t voice, float sec);
   void cutToPos(float sec);
   void setFadeTime(size_t voice, float sec) { voices[voice].setFadeTime(sec); }
+  void setFadeTime(float sec) {
+    for (size_t i = 0; i < NUM_VOICES; i++) {
+      voices[i].setFadeTime(sec);
+    }
+  }
   void setRecPreSlewTime(size_t voice, float d) {
     voices[voice].setRecPreSlewTime(d);
   }
