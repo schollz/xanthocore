@@ -7,18 +7,18 @@ https://opensource.org/licenses/MIT.
 */
 
 #pragma once
-#ifndef DSY_OSCILLATOR_H
-#define DSY_OSCILLATOR_H
+#ifndef DSY_OSCILLATOR2_H
+#define DSY_OSCILLATOR2_H
 #include <stdint.h>
 
 #ifdef __cplusplus
 
 /** Synthesis of several waveforms, including polyBLEP bandlimited waveforms.
  */
-class Oscillator {
+class Oscillator2 {
  public:
-  Oscillator() {}
-  ~Oscillator() {}
+  Oscillator2() {}
+  ~Oscillator2() {}
   /** Choices for output waveforms, POLYBLEP are appropriately labeled. Others
    * are naive forms.
    */
@@ -34,7 +34,7 @@ class Oscillator {
     WAVE_LAST,
   };
 
-  /** Initializes the Oscillator
+  /** Initializes the Oscillator2
 
       \param sample_rate - sample rate of the audio engine being run, and the
      frequency that the Process function will be called.
@@ -59,7 +59,8 @@ class Oscillator {
     eor_ = true;
   }
 
-  /** Changes the frequency of the Oscillator, and recalculates phase increment.
+  /** Changes the frequency of the Oscillator2, and recalculates phase
+   * increment.
    */
   inline void SetFreq(const float f) {
     freq_ = f;

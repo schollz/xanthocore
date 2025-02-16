@@ -5,12 +5,12 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "../dsp/Oscillator.h"
+#include "../dsp/Oscillator2.h"
 #include "../softcut/Utilities.h"
 #include "../softcut/Voices.h"
 using namespace softcut;
 
-enum OscillatorIndex {
+enum Oscillator2Index {
   LFO_AMP,
   LFO_PAN,
   LFO_DIRECTION,
@@ -37,7 +37,7 @@ class Barcode {
   const float xfadeSeconds = 0.1;
   int xfadeSamplesWait = 0;
   int xfadeSamples = 1000;
-  Oscillator osc[NUM_VOICES][NUM_OSCILLATORS];
+  Oscillator2 osc[NUM_VOICES][NUM_OSCILLATORS];
   float rates[6] = {1.0, 0.5, 1.5, 0.25, 4.0, 8.0};
   float dbs[6] = {0, 6, -6, 12, 0, 0};
 };

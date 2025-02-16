@@ -1,10 +1,10 @@
-#include "Oscillator.h"
+#include "Oscillator2.h"
 
 #include <cmath>
 
 static inline float Polyblep(float phase_inc, float t);
 
-float Oscillator::Process() {
+float Oscillator2::Process() {
   float out, t;
   switch (waveform_) {
     case WAVE_SIN:
@@ -65,7 +65,7 @@ float Oscillator::Process() {
   return out_;
 }
 
-float Oscillator::CalcPhaseInc(float f) { return f * sr_recip_; }
+float Oscillator2::CalcPhaseInc(float f) { return f * sr_recip_; }
 
 static float Polyblep(float phase_inc, float t) {
   float dt = phase_inc;

@@ -8,6 +8,8 @@
 #ifdef INCLUDE_FVERB3
 #include "lib/fverb3.h"
 #endif
+//
+#include "lib/barcode/Barcode.h"
 
 bool button1Pressed = false;
 #ifdef INCLUDE_FVERB3
