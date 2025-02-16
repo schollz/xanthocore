@@ -6,7 +6,8 @@ void Barcode::init(float *tape, unsigned int numFrames, float sr,
                    float audioblockSize) {
   // seed randomness
   srand(time(NULL));
-  xfadeSamples = xfadeSeconds * sr;
+  xfadeSamples = (10 * audioblockSize);
+  xfadeSeconds = static_cast<float>(xfadeSamples) / sr;
 
   voices.init(tape, numFrames, sr);
   // make all voices uses the same tape
@@ -45,16 +46,17 @@ void Barcode::init(float *tape, unsigned int numFrames, float sr,
 
 void Barcode::ToggleRecording(bool on) {
   if (on && !recording) {
-    voices.setFadeTime(0.1);
-    voices.setRate(0, 1.0);
-    voices.setRecLevel(0, 1.0);
-    voices.setPreLevel(0, 1.0);
-    voices.cutToPos(0);
-    voices.setLoopEnd(60);
     barcoding = false;
+    voices.setRecFlag(0, true);
+    voices.setRate(0, 1.0);
+    voices.setRecLevel(0, 0.0);
+    voices.setPreLevel(0, 0.0);
+    voices.cutToPos(0);
+    voices.setLoopStart(0);
+    voices.setLoopEnd(30);
+    xfadeSamplesWait = xfadeSamples;
   } else if (!on && recording) {
     voices.setRecLevel(0, 0.0);
-    voices.setFadeTime(1.0);
     xfadeSamplesWait = xfadeSamples;
   }
   recording = on;
@@ -97,18 +99,23 @@ void Barcode::process(const float *inl, const float *inr, float *outl,
   if (xfadeSamplesWait > 0) {
     xfadeSamplesWait -= numFrames;
     if (xfadeSamplesWait <= 0) {
-      // turn off the recording
-      voices.setRecFlag(0, false);
-      // set the loop end point
-      recordingStop = voices.getSavedPosition(0) - xfadeSeconds;
-      // print recording stop
-      voices.setLoopEnd(recordingStop);
-      // set all voices to random positions
-      for (size_t i = 0; i < NUM_VOICES; i++) {
-        voices.cutToPos(i,
-                        static_cast<float>(rand()) / RAND_MAX * recordingStop);
+      if (recording) {
+        voices.cutToPos(0, 0.0);
+        voices.setRecLevel(0, 1.0);
+      } else {
+        // turn off the recording
+        voices.setRecFlag(0, false);
+        // set the loop end point
+        recordingStop = voices.getSavedPosition(0) - xfadeSeconds;
+        // print recording stop
+        voices.setLoopEnd(recordingStop);
+        // set all voices to random positions
+        for (size_t i = 0; i < NUM_VOICES; i++) {
+          voices.cutToPos(
+              i, static_cast<float>(rand()) / RAND_MAX * recordingStop);
+        }
+        barcoding = true;
       }
-      barcoding = true;
     }
   }
 

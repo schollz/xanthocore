@@ -32,18 +32,19 @@ class Barcode {
   bool Barcoding() { return barcoding; }
   bool Recording() { return recording; }
   float VoicePosition(size_t voice) { return voices.getSavedPosition(voice); }
+  void setMainWet(float val) { voices.setMainWet(val); }
 
  private:
   Voices voices;
   float recordingStop = 0;
   bool recording;
   bool barcoding;
-  const float xfadeSeconds = 0.1;
   int xfadeSamplesWait = 0;
-  int xfadeSamples = 1000;
+  int xfadeSamples = 128 * 10;
+  float xfadeSeconds = 0.1;
   Oscillator2 osc[NUM_VOICES][NUM_OSCILLATORS];
   float rates[6] = {1.0, 0.5, 1.5, 0.25, 1.0, 2.0};
-  float dbs[6] = {0, 6, -6, 12, 0, -6};
+  float dbs[6] = {6, 12, 0, 12, 21, -3};
 };
 
 #endif

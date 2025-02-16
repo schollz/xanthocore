@@ -118,9 +118,14 @@ static void AudioCallback(AudioHandle::InterleavingInputBuffer in,
   if (metroPrintTimer.Process()) {
     // print hello
 
-    daisyseed.PrintLine("cpu needed: %2.1f %2.1f", cpu_needed,
-                        barcode.VoicePosition(0));
+    daisyseed.PrintLine("cpu needed: %2.1f %2.1f, %2.2f", cpu_needed,
+                        barcode.VoicePosition(0), hw.knob1.Process());
   } else if (metroUpdateControls.Process()) {
+    barcode.setMainWet(hw.knob1.Process());
+    reverbWet = hw.knob2.Process();
+    reverbDry = 1.0 - reverbWet;
+    fverb3.set_wet(reverbWet * 100);
+    fverb3.set_dry(reverbDry * 100);
   }
 
 #ifdef INCLUDE_AUDIO_PROFILING
@@ -136,7 +141,11 @@ int main(void) {
   daisyseed.StartLog(false);
 
 #ifdef INCLUDE_FVERB3
-  fverb3.init(AUDIO_SAMPLE_RATE / 2);
+  fverb3.init(AUDIO_SAMPLE_RATE);
+  // fverb3.set_predelay(50);
+  fverb3.set_input_diffusion_2(80);
+  fverb3.set_tail_density(80);
+  fverb3.set_decay(75);
 #endif
 
   // clear tape_linear_buffer
@@ -172,6 +181,7 @@ int main(void) {
   daisyseed.PrintLine("Audio started");
   while (1) {
     hw.ProcessDigitalControls();
+    hw.ProcessAnalogControls();
     // update controls
     if (hw.button1.RisingEdge() && !button1Pressed) {
       // print

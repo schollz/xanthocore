@@ -16,6 +16,11 @@ class Voices {
   void setLevel(size_t voice, float level);
   void setPan(size_t voice, float pan);
   void setLoopStart(size_t voice, float sec);
+  void setLoopStart(float sec) {
+    for (size_t i = 0; i < NUM_VOICES; i++) {
+      setLoopStart(i, sec);
+    }
+  }
   void setLoopEnd(size_t voice, float sec);
   void setLoopEnd(float sec);
   void setLoopFlag(size_t voice, bool val);
@@ -38,6 +43,10 @@ class Voices {
   void setRateSlewTime(size_t voice, float d) {
     voices[voice].setRateSlewTime(d);
   }
+  void setMainWet(float val) {
+    mainWet = val;
+    mainDry = 1.0 - val;
+  }
   float getSavedPosition(size_t voice);
   void process(const float *inl, const float *inr, float *outl, float *outr,
                unsigned int numFrames);
@@ -54,6 +63,8 @@ class Voices {
   float levels[NUM_VOICES];
   float inputBus[NUM_VOICES];
   bool playing[NUM_VOICES];
+  float mainWet = 0.5;
+  float mainDry = 0.5;
 
   float *buf;
   unsigned int bufFrames;
