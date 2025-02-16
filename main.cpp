@@ -21,15 +21,15 @@ uint8_t DMA_BUFFER_MEM_SECTION buffer_spi[4];
 #define INCLUDE_AUDIO_PROFILING 1
 #define RP2040_I2C_ADDRESS 0x28
 #define AUDIO_BLOCK_SIZE 128
-#define AUDIO_SAMPLE_RATE 48000
+#define AUDIO_SAMPLE_RATE 32000  // 32000 or 48000
 #define CROSSFADE_PREROLL 4800
+double CYCLES_AVAILBLE =
+    ((400000000.0d * (double)AUDIO_BLOCK_SIZE) / (double)AUDIO_SAMPLE_RATE);
 #ifdef INCLUDE_FVERB3
 #define MAX_SIZE (2 << 22)
 #else
 #define MAX_SIZE (2 << 22)
 #endif
-#define CYCLES_AVAILBLE \
-  1066666  // (400000000 * AUDIO_BLOCK_SIZE / AUDIO_SAMPLE_RATE)
 using namespace daisy;
 using namespace daisysp;
 
@@ -76,27 +76,29 @@ static void AudioCallback(AudioHandle::InterleavingInputBuffer in,
   }
 
 #ifdef INCLUDE_FVERB3
-  // Downsample to 24000 sample rate
-  float downsampled_inl[AUDIO_BLOCK_SIZE / 2];
-  float downsampled_inr[AUDIO_BLOCK_SIZE / 2];
-  for (size_t i = 0; i < AUDIO_BLOCK_SIZE / 2; i++) {
-    downsampled_inl[i] = inl[i * 2];
-    downsampled_inr[i] = inr[i * 2];
-  }
+  fverb3.compute(AUDIO_BLOCK_SIZE, inl, inr, outl, outr);
 
-  // Process with FVerb3
-  float downsampled_outl[AUDIO_BLOCK_SIZE / 2];
-  float downsampled_outr[AUDIO_BLOCK_SIZE / 2];
-  fverb3.compute(AUDIO_BLOCK_SIZE / 2, downsampled_inl, downsampled_inr,
-                 downsampled_outl, downsampled_outr);
+  // // Downsample to 24000 sample rate
+  // float downsampled_inl[AUDIO_BLOCK_SIZE / 2];
+  // float downsampled_inr[AUDIO_BLOCK_SIZE / 2];
+  // for (size_t i = 0; i < AUDIO_BLOCK_SIZE / 2; i++) {
+  //   downsampled_inl[i] = inl[i * 2];
+  //   downsampled_inr[i] = inr[i * 2];
+  // }
 
-  // Upsample back to 48000 sample rate
-  for (size_t i = 0; i < AUDIO_BLOCK_SIZE / 2; i++) {
-    outl[i * 2] = downsampled_outl[i];
-    outl[i * 2 + 1] = downsampled_outl[i];
-    outr[i * 2] = downsampled_outr[i];
-    outr[i * 2 + 1] = downsampled_outr[i];
-  }
+  // // Process with FVerb3
+  // float downsampled_outl[AUDIO_BLOCK_SIZE / 2];
+  // float downsampled_outr[AUDIO_BLOCK_SIZE / 2];
+  // fverb3.compute(AUDIO_BLOCK_SIZE / 2, downsampled_inl, downsampled_inr,
+  //                downsampled_outl, downsampled_outr);
+
+  // // Upsample back to 48000 sample rate
+  // for (size_t i = 0; i < AUDIO_BLOCK_SIZE / 2; i++) {
+  //   outl[i * 2] = downsampled_outl[i];
+  //   outl[i * 2 + 1] = downsampled_outl[i];
+  //   outr[i * 2] = downsampled_outr[i];
+  //   outr[i * 2 + 1] = downsampled_outr[i];
+  // }
 
 #endif
 
@@ -160,6 +162,11 @@ int main(void) {
 
   daisyseed.PrintLine("Starting audio...");
   hw.SetAudioBlockSize(AUDIO_BLOCK_SIZE);
+  if (AUDIO_SAMPLE_RATE == 32000) {
+    SaiHandle::Config sai_config;
+    sai_config.sr = SaiHandle::Config::SampleRate::SAI_32KHZ;
+    hw.SetAudioSampleRate(sai_config.sr);
+  }
   hw.StartAudio(AudioCallback);
   hw.StartAdc();
   daisyseed.PrintLine("Audio started");
