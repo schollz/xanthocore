@@ -3,7 +3,7 @@
 
 #include "Voice.h"
 
-#define NUM_VOICES 6
+#define NUM_VOICES 5
 
 namespace softcut {
 class Voices {
