@@ -2,6 +2,14 @@
 
 ## dev 
 
+### using web uploader
+
+1. Press reset, then quickly press the `BOOT` button.
+2. Go to https://electro-smith.github.io/Programmer/
+3. Click "Connect" to "Daisy Bootloader"
+4. Choose "xanthocore.bin"
+5. Click "Program"
+
 ###  upload
 
 Press the `RESET` button on the Daisy Seed and then run the following:

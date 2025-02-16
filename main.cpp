@@ -163,7 +163,7 @@ int main(void) {
   metroPrintTimer.Init(10.0f, AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE);
   metroUpdateControls.Init(30.0f, AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE);
 
-  System::Delay(3000);
+  // System::Delay(3000);
   // print starting
   daisyseed.PrintLine("Loading barcode...");
   barcode.init(tape_linear_buffer, MAX_SIZE, AUDIO_SAMPLE_RATE,
@@ -192,8 +192,10 @@ int main(void) {
     } else if (hw.button1.RisingEdge() && button1Pressed) {
       daisyseed.PrintLine("button1 released");
       button1Pressed = false;
-      hw.led1.Set(0, 0, 0);
+      hw.led1.Set(0, 0, 1);
       barcode.ToggleRecording(false);
+    } else {
+      hw.led1.Set(0, 1, 1);
     }
     if (barcode.Barcoding()) {
       hw.led2.Set(0, 1, 0);

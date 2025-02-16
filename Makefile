@@ -6,6 +6,9 @@ building: lib/DaisySP/core
 	PATH=$(HOME)/bin/gcc-arm-none-eabi-10-2020-q4-major/bin:$$PATH \
 	/usr/bin/make -f ./Makefile.1 -j$(CORES)
 
+# upload: building
+# 	/usr/bin/make -f ./Makefile.1 program-dfu 
+
 upload: building
 	/usr/bin/make -f ./Makefile.1 program-dfu 
 
