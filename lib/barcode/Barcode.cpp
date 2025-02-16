@@ -2,7 +2,7 @@
 
 #include <time.h>
 
-void Barcode::init(float *tape, unsigned int numFrames, float sr,
+void Barcode::Init(float *tape, unsigned int numFrames, float sr,
                    float audioblockSize) {
   // seed randomness
   srand(time(NULL));
@@ -62,7 +62,7 @@ void Barcode::ToggleRecording(bool on) {
   recording = on;
 }
 
-void Barcode::process(const float *inl, const float *inr, float *outl,
+void Barcode::Process(const float *inl, const float *inr, float *outl,
                       float *outr, unsigned int numFrames) {
   if (barcoding) {
     for (size_t i = 0; i < NUM_VOICES; i++) {

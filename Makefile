@@ -1,10 +1,10 @@
 # Get the CPU cores
 CORES := $(shell grep -c ^processor /proc/cpuinfo)
 
-building: lib/DaisySP/core
+pod_barcode: lib/DaisySP/core
 	LD_LIBRARY_PATH=$(HOME)/bin/gcc-arm-none-eabi-10-2020-q4-major/arm-none-eabi/lib:$$LD_LIBRARY_PATH \
 	PATH=$(HOME)/bin/gcc-arm-none-eabi-10-2020-q4-major/bin:$$PATH \
-	/usr/bin/make -f ./Makefile.1 -j$(CORES)
+	/usr/bin/make -f ./apps/pod_barcode/Makefile -j$(CORES)
 
 # upload: building
 # 	/usr/bin/make -f ./Makefile.1 program-dfu 

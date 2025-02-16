@@ -5,9 +5,11 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "../App.h"
 #include "../dsp/Oscillator2.h"
 #include "../softcut/Utilities.h"
 #include "../softcut/Voices.h"
+
 using namespace softcut;
 
 enum Oscillator2Index {
@@ -19,15 +21,16 @@ enum Oscillator2Index {
   NUM_OSCILLATORS
 };
 
-class Barcode {
+class Barcode : public App {
  public:
   // make constructor with pointer to voices
-  Barcode(){};
-  void init(float *tape, unsigned int numFrames, float sr,
-            float audioblockSize);
+  Barcode() = default;
+  void Init(float *tape, unsigned int numFrames, float sr,
+            float audioblockSize) override;
+  void Process(const float *inl, const float *inr, float *outl, float *outr,
+               unsigned int numFrames) override;
+  Voices &getVoices() override { return voices; }
   void ToggleRecording(bool on);
-  void process(const float *inl, const float *inr, float *outl, float *outr,
-               unsigned int numFrames);
 
   bool Barcoding() { return barcoding; }
   bool Recording() { return recording; }

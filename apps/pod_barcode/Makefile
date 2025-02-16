@@ -1,20 +1,10 @@
-
-# Project Name
-TARGET = xanthocore
+TARGET = xanthocore_pod_barcode
 
 USE_DAISYSP_LGPL = 1
 
 APP_TYPE=BOOT_QSPI
-#APP_TYPE=BOOT_SRAM
-# without BOOT_SRAM: make program
-# with BOOT_SRAM:
-# hold boot, press reset and then
-# > make program-boot
-# press reset and then quickly press boot
-# > make program-dfu
 
-# Sources
-CPP_SOURCES = main.cpp \
+CPP_SOURCES = apps/pod_barcode/main.cpp \
 	lib/softcut/FadeCurves.cpp \
 	lib/softcut/ReadWriteHead.cpp \
 	lib/softcut/SubHead.cpp \
@@ -24,15 +14,12 @@ CPP_SOURCES = main.cpp \
 	lib/barcode/Barcode.cpp \
 	lib/softcut/Voices.cpp \
 	lib/softcut/Voice.cpp
-C_SOURCES = $(wildcard lib/libDaisy/Drivers/CMSIS/DSP/Source/*/*.c)
 
-# Library Locations
 LIBDAISY_DIR = lib/libDaisy
 DAISYSP_DIR = lib/DaisySP
 USE_FATFS = 1
 LDFLAGS += -u _printf_float
 
-# Compiler Flags
 CXXFLAGS += $(INCLUDES)
 # Core location, and generic Makefile.
 SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
