@@ -29,8 +29,8 @@ void Barcode::Init(float *tape, unsigned int numFrames, float sr,
   }
   // set first voice to prime it to record
   voices.setRecFlag(0, true);
-  barcoding = false;
-  recording = false;
+  setPlaying(false);
+  setRecording(false);
 
   // initialize oscillators to random lfos with periods between 5 and 40
   // seconds
@@ -46,7 +46,7 @@ void Barcode::Init(float *tape, unsigned int numFrames, float sr,
 
 void Barcode::ToggleRecording(bool on) {
   if (on && !recording) {
-    barcoding = false;
+    setPlaying(false);
     voices.setRecFlag(0, true);
     voices.setRate(0, 1.0);
     voices.setRecLevel(0, 0.0);
@@ -59,12 +59,12 @@ void Barcode::ToggleRecording(bool on) {
     voices.setRecLevel(0, 0.0);
     xfadeSamplesWait = xfadeSamples;
   }
-  recording = on;
+  setRecording(on);
 }
 
 void Barcode::Process(const float *inl, const float *inr, float *outl,
                       float *outr, unsigned int numFrames) {
-  if (barcoding) {
+  if (playing) {
     for (size_t i = 0; i < NUM_VOICES; i++) {
       for (size_t j = 0; j < NUM_OSCILLATORS; j++) {
         osc[i][j].Process();
@@ -114,7 +114,7 @@ void Barcode::Process(const float *inl, const float *inr, float *outl,
           voices.cutToPos(
               i, static_cast<float>(rand()) / RAND_MAX * recordingStop);
         }
-        barcoding = true;
+        setPlaying(true);
       }
     }
   }

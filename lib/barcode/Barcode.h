@@ -23,6 +23,14 @@ enum Oscillator2Index {
 
 class Barcode : public App {
  public:
+  enum class CallbackType {
+    ON_PLAY_START,
+    ON_PLAY_STOP,
+    ON_RECORD_START,
+    ON_RECORD_STOP,
+    ON_PLAY,
+    ON_RECORD
+  };
   // make constructor with pointer to voices
   Barcode() = default;
   void Init(float *tape, unsigned int numFrames, float sr,
@@ -30,18 +38,31 @@ class Barcode : public App {
   void Process(const float *inl, const float *inr, float *outl, float *outr,
                unsigned int numFrames) override;
   Voices &getVoices() override { return voices; }
-  void ToggleRecording(bool on);
-
-  bool Barcoding() { return barcoding; }
-  bool Recording() { return recording; }
-  float VoicePosition(size_t voice) { return voices.getSavedPosition(voice); }
   void setMainWet(float val) { voices.setMainWet(val); }
 
+  void ToggleRecording(bool on);
+
  private:
+  void setPlaying(bool on) {
+    playing = on;
+    if (on) {
+      triggerCallback(static_cast<int>(CallbackType::ON_PLAY_START));
+    } else {
+      triggerCallback(static_cast<int>(CallbackType::ON_PLAY_STOP));
+    }
+  }
+  void setRecording(bool on) {
+    recording = on;
+    if (on) {
+      triggerCallback(static_cast<int>(CallbackType::ON_RECORD_START));
+    } else {
+      triggerCallback(static_cast<int>(CallbackType::ON_RECORD_STOP));
+    }
+  }
   Voices voices;
   float recordingStop = 0;
   bool recording;
-  bool barcoding;
+  bool playing;
   int xfadeSamplesWait = 0;
   int xfadeSamples = 128 * 10;
   float xfadeSeconds = 0.1;

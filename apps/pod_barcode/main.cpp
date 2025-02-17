@@ -13,7 +13,7 @@
 #include "../../lib/barcode/Barcode.h"
 using namespace softcut;
 
-App* app;
+App *app;
 bool button1Pressed = false;
 #ifdef INCLUDE_FVERB3
 FVerb3 fverb3;
@@ -40,6 +40,7 @@ Metro metroPrintTimer;
 Metro metroUpdateControls;
 float reverbWet = 0.5;
 float reverbDry = 1.0 - reverbWet;
+bool do_update_leds = false;
 
 float DSY_SDRAM_BSS tape_linear_buffer[MAX_SIZE];
 
@@ -177,7 +178,36 @@ int main(void) {
   // print starting
   daisyseed.PrintLine("Loading barcode...");
   app = new Barcode();
+  Barcode *barcode = static_cast<Barcode *>(app);
   app->Init(tape_linear_buffer, MAX_SIZE, AUDIO_SAMPLE_RATE, AUDIO_BLOCK_SIZE);
+  app->registerCallback(
+      static_cast<int>(Barcode::CallbackType::ON_RECORD_START),
+      []() { daisyseed.PrintLine("Recording started"); });
+  app->registerCallback(static_cast<int>(Barcode::CallbackType::ON_RECORD_STOP),
+                        []() {
+                          daisyseed.PrintLine("Recording stopped");
+                          hw.led1.Set(0, 0, 0);
+                          do_update_leds = true;
+                        });
+  app->registerCallback(
+      static_cast<int>(Barcode::CallbackType::ON_RECORD_START), []() {
+        daisyseed.PrintLine("Recording");
+        hw.led1.Set(1, 0, 0);
+        do_update_leds = true;
+      });
+  app->registerCallback(static_cast<int>(Barcode::CallbackType::ON_PLAY_START),
+                        []() {
+                          daisyseed.PrintLine("Playing started");
+                          hw.led1.Set(0, 1, 0);
+                          do_update_leds = true;
+                        });
+  app->registerCallback(static_cast<int>(Barcode::CallbackType::ON_PLAY_STOP),
+                        []() {
+                          daisyseed.PrintLine("Playing stopped");
+                          hw.led1.Set(0, 0, 0);
+                          do_update_leds = true;
+                        });
+  daisyseed.PrintLine("Barcode loaded");
 
   daisyseed.PrintLine("Starting audio...");
   hw.SetAudioBlockSize(AUDIO_BLOCK_SIZE);
@@ -192,29 +222,18 @@ int main(void) {
   while (1) {
     hw.ProcessDigitalControls();
     hw.ProcessAnalogControls();
-    // update controls
+
     if (hw.button1.RisingEdge() && !button1Pressed) {
-      // print
-      daisyseed.PrintLine("button1 pressed");
       button1Pressed = true;
-      hw.led1.Set(1, 0, 0);
-      // barcode.ToggleRecording(true);
+      barcode->ToggleRecording(true);
     } else if (hw.button1.RisingEdge() && button1Pressed) {
-      daisyseed.PrintLine("button1 released");
       button1Pressed = false;
-      hw.led1.Set(0, 0, 1);
-      // barcode.ToggleRecording(false);
-    } else {
-      hw.led1.Set(0, 1, 1);
+      barcode->ToggleRecording(false);
     }
-    // if (barcode.Barcoding()) {
-    //   hw.led2.Set(0, 1, 0);
-    // } else if (barcode.Recording()) {
-    //   hw.led2.Set(1, 0, 0);
-    // } else {
-    //   hw.led2.Set(0, 0, 0);
-    // }
-    hw.UpdateLeds();
+
+    if (do_update_leds) {
+      hw.UpdateLeds();
+    }
     System::Delay(6);
   }
 }

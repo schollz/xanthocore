@@ -25,4 +25,4 @@ debug:
 		exec arm-none-eabi-gdb -x openocd.gdb
 
 clean:
-	/usr/bin/make -f ./Makefile.1 clean
+	/usr/bin/make -f ./apps/pod_barcode/Makefile clean
