@@ -42,5 +42,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            xanthocore_pod_barcode.bin
+            build/xanthocore_pod_barcode.bin
            
