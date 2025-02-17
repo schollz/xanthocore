@@ -14,10 +14,10 @@ jobs:
     steps:
       - name: Checkout project
         uses: actions/checkout@v4.2.1
-      - name: Install ncurses
-        run: |
-          wget http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.4-2_amd64.deb && sudo dpkg -i libtinfo5_6.4-2_amd64.deb && rm -f libtinfo5_6.4-2_amd64.deb
-          wget http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libncurses5_6.4-2_amd64.deb && sudo dpkg -i libncurses5_6.4-2_amd64.deb && rm -f libncurses5_6.4-2_amd64.deb
+      # - name: Install ncurses
+      #   run: |
+      #     wget http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.4-2_amd64.deb && sudo dpkg -i libtinfo5_6.4-2_amd64.deb && rm -f libtinfo5_6.4-2_amd64.deb
+      #     wget http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libncurses5_6.4-2_amd64.deb && sudo dpkg -i libncurses5_6.4-2_amd64.deb && rm -f libncurses5_6.4-2_amd64.deb
       - name: Install dependencies
         run: |
           sudo apt update
@@ -28,3 +28,4 @@ jobs:
           wget https://github.com/schollz/daisy1/releases/download/prereqs/gcc-arm-none-eabi-10-2020-q4-major.zip
           unzip gcc-arm-none-eabi-10-2020-q4-major.zip
           rm gcc-arm-none-eabi-10-2020-q4-major.zip
+      
