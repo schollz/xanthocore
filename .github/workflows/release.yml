@@ -1,0 +1,45 @@
+name: build
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4.2.1
+      - name: Install ncurses
+        run: |
+          wget https://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.2-0ubuntu2.1_amd64.deb && sudo dpkg -i libtinfo5_6.2-0ubuntu2.1_amd64.deb && rm -f libtinfo5_6.2-0ubuntu2.1_amd64.deb
+          wget https://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libncurses5_6.2-0ubuntu2.1_amd64.deb && sudo dpkg -i libncurses5_6.2-0ubuntu2.1_amd64.deb && rm -f libncurses5_6.2-0ubuntu2.1_amd64.deb
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libncurses5 libncurses5-dev 
+      - name: Install gcc-arm-none-eabi-10
+        run: |
+          mkdir -p $HOME/bin
+          wget -q https://github.com/schollz/daisy1/releases/download/prereqs/gcc-arm-none-eabi-10-2020-q4-major.zip
+          unzip -q gcc-arm-none-eabi-10-2020-q4-major.zip -d $HOME/bin
+          rm gcc-arm-none-eabi-10-2020-q4-major.zip
+          $HOME/bin/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-gcc --version
+      - name: Add gcc-arm-none-eabi to PATH
+        run: echo "$HOME/bin/gcc-arm-none-eabi-10-2020-q4-major/bin" >> $GITHUB_PATH
+      - name: Prerequisites
+        run: |
+          make lib/DaisySP/core
+      - name: Build 
+        run: |
+          make pod_barcode
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            xanthocore_pod_barcode.bin
+           
