@@ -1,4 +1,4 @@
-TARGET = xanthocore_pod_barcode
+TARGET = xanthocore
 
 USE_DAISYSP_LGPL = 1
 
