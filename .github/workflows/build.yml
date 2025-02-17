@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y lib32ncurses5 libncurses5 libncurses5-dev 
+          sudo apt install -y lib32ncurses5-dev libncurses5 libncurses5-dev 
       - name: Install gcc-arm-none-eabi-10
         run: |
           mkdir -p $HOME/bin
