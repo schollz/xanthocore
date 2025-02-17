@@ -26,7 +26,7 @@ jobs:
         run: |
           mkdir -p $HOME/bin
           wget https://github.com/schollz/daisy1/releases/download/prereqs/gcc-arm-none-eabi-10-2020-q4-major.zip
-          unzip gcc-arm-none-eabi-10-2020-q4-major.zip
+          unzip gcc-arm-none-eabi-10-2020-q4-major.zip -d $HOME/bin
           rm gcc-arm-none-eabi-10-2020-q4-major.zip
           $HOME/bin/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-gcc --version
       
