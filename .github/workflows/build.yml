@@ -29,7 +29,9 @@ jobs:
           unzip -q gcc-arm-none-eabi-10-2020-q4-major.zip -d $HOME/bin
           rm gcc-arm-none-eabi-10-2020-q4-major.zip
           $HOME/bin/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-gcc --version
-      - name: Build
+      - name: Add gcc-arm-none-eabi to PATH
+        run: echo "$HOME/bin/gcc-arm-none-eabi-10-2020-q4-major/bin" >> $GITHUB_PATH
+      - name: Build 
         run: |
           make pod_barcode
   
