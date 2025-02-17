@@ -18,11 +18,10 @@ jobs:
         run: |
           wget https://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.2-0ubuntu2.1_amd64.deb && sudo dpkg -i libtinfo5_6.2-0ubuntu2.1_amd64.deb && rm -f libtinfo5_6.2-0ubuntu2.1_amd64.deb
           wget https://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libncurses5_6.2-0ubuntu2.1_amd64.deb && sudo dpkg -i libncurses5_6.2-0ubuntu2.1_amd64.deb && rm -f libncurses5_6.2-0ubuntu2.1_amd64.deb
-          wget http://security.ubuntu.com/ubuntu/pool/main//n/ncurses/lib32ncurses5-dev_6.1-1ubuntu1_amd64.deb && sudo dpkg -i lib32ncurses5-dev_6.1-1ubuntu1_amd64.deb && rm -f lib32ncurses5-dev_6.1-1ubuntu1_amd64.deb
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y lib32ncurses5-dev libncurses5 libncurses5-dev 
+          sudo apt install -y libncurses5 libncurses5-dev 
       - name: Install gcc-arm-none-eabi-10
         run: |
           mkdir -p $HOME/bin
