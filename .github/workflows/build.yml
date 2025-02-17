@@ -25,8 +25,11 @@ jobs:
       - name: Install gcc-arm-none-eabi-10
         run: |
           mkdir -p $HOME/bin
-          wget https://github.com/schollz/daisy1/releases/download/prereqs/gcc-arm-none-eabi-10-2020-q4-major.zip
-          unzip gcc-arm-none-eabi-10-2020-q4-major.zip -d $HOME/bin
+          wget -q https://github.com/schollz/daisy1/releases/download/prereqs/gcc-arm-none-eabi-10-2020-q4-major.zip
+          unzip -q gcc-arm-none-eabi-10-2020-q4-major.zip -d $HOME/bin
           rm gcc-arm-none-eabi-10-2020-q4-major.zip
           $HOME/bin/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-gcc --version
-      
+      - name: Build
+        run: |
+          make pod_barcode
+  
