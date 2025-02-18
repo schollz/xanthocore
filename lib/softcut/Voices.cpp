@@ -12,12 +12,8 @@ void Voices::init(float *tape, unsigned int numFrames, float sr,
   memset(tape, 0, numFrames * sizeof(float));
   bufFrames = numFrames;
   sampleRate = sr;
-  wetDrySlew.setSampleRate(sr / audioblockSize);
-  wetDrySlew.setTime(0.2);
 
   for (size_t i = 0; i < NUM_VOICES; i++) {
-    levelSlew[i].setSampleRate(sr);
-    levelSlew[i].setTime(5);
     loopStart[i] = 0;
     loopEnd[i] = 2;
     panning[i] = 0.1;  // this will be set
@@ -116,9 +112,7 @@ void Voices::setPan(size_t voice, float pan) {
 }
 
 void Voices::setLevel(size_t voice, float level) {
-  level = fclamp(level, 0.0f, 2.0f);
-  levelsSet[voice] = level / (float)NUM_VOICES;
-  levelSlew[voice].setTarget(levelsSet[voice]);
+  levels[voice] = fclamp(level, 0.0f, 2.0f) / (float)NUM_VOICES;
 }
 
 void Voices::setDB(size_t voice, float db) { setLevel(voice, dbamp(db)); }
@@ -145,14 +139,12 @@ void Voices::process(const float *const *in, float **out,
       voices[i].processBlockMono(in[1], output, numFrames);
     }
     for (size_t j = 0; j < numFrames; j++) {
-      output[j] *= levelsSet[i];
+      output[j] *= levels[i];
       out[0][j] += output[j] * panningL[i];
       out[1][j] += output[j] * panningR[i];
     }
   }
   // wet/dry mix
-  float mainWet = wetDrySlew.update();
-  float mainDry = 1.0f - mainWet;
   for (size_t i = 0; i < numFrames; i++) {
     out[0][i] = mainWet * out[0][i] + mainDry * in[0][i];
     out[1][i] = mainWet * out[1][i] + mainDry * in[1][i];

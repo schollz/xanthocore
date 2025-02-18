@@ -10,11 +10,7 @@ namespace softcut {
 
 class Voices {
  public:
-  Voices() : wetDrySlew(48000) {
-    for (size_t i = 0; i < NUM_VOICES; i++) {
-      levelSlew[i] = LinearRamp(48000);
-    }
-  }
+  Voices(){};
 
   void init(float *buf, unsigned int numFrames, float sampleRate,
             float audioblockSize);
@@ -56,7 +52,10 @@ class Voices {
   void setRateSlewTime(size_t voice, float d) {
     voices[voice].setRateSlewTime(d);
   }
-  void setMainWet(float val) { wetDrySlew.setTarget(val); }
+  void setMainWet(float val) {
+    mainWet = val;
+    mainDry = 1.0 - val;
+  }
   float getSavedPosition(size_t voice);
 
   void process(const float *const *in, float **out, unsigned int numFrames);
@@ -70,10 +69,9 @@ class Voices {
   float panning[NUM_VOICES] = {0};
   float panningL[NUM_VOICES] = {0};
   float panningR[NUM_VOICES] = {0};
-  float levelsSet[NUM_VOICES] = {0};
-  float levelsCur[NUM_VOICES] = {0};
-  LinearRamp levelSlew[NUM_VOICES];
-  LinearRamp wetDrySlew;
+  float levels[NUM_VOICES] = {0};
+  float mainWet = 0.5;
+  float mainDry = 0.5;
   float inputBus[NUM_VOICES] = {0};
   bool playing[NUM_VOICES] = {false};
 
