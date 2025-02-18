@@ -41,6 +41,7 @@ class Barcode : public App {
   void setMainWet(float val) { voices.setMainWet(val); }
 
   void ToggleRecording(bool on);
+  void TogglePlaying(bool on);
 
  private:
   void setPlaying(bool on) {

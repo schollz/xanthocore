@@ -14,7 +14,6 @@
 using namespace softcut;
 
 App *app;
-bool button1Pressed = false;
 #ifdef INCLUDE_FVERB3
 FVerb3 fverb3;
 #endif
@@ -202,13 +201,13 @@ int main(void) {
   app->registerCallback(static_cast<int>(Barcode::CallbackType::ON_PLAY_START),
                         []() {
                           daisyseed.PrintLine("Playing started");
-                          hw.led1.Set(0, 1, 0);
+                          hw.led2.Set(0, 1, 0);
                           do_update_leds = true;
                         });
   app->registerCallback(static_cast<int>(Barcode::CallbackType::ON_PLAY_STOP),
                         []() {
                           daisyseed.PrintLine("Playing stopped");
-                          hw.led1.Set(0, 0, 0);
+                          hw.led2.Set(0, 0, 0);
                           do_update_leds = true;
                         });
   daisyseed.PrintLine("Barcode loaded");
@@ -223,6 +222,9 @@ int main(void) {
   hw.StartAudio(AudioCallback);
   hw.StartAdc();
   daisyseed.PrintLine("Audio started");
+  bool button1Pressed = false;
+  bool button2Pressed = false;
+
   while (1) {
     hw.ProcessDigitalControls();
     hw.ProcessAnalogControls();
@@ -234,9 +236,15 @@ int main(void) {
       button1Pressed = false;
       barcode->ToggleRecording(false);
     }
+    if (hw.button2.RisingEdge() && !button2Pressed) {
+      button2Pressed = true;
+      barcode->TogglePlaying(true);
+    } else if (hw.button2.RisingEdge() && button2Pressed) {
+      button2Pressed = false;
+      barcode->TogglePlaying(false);
+    }
 
     if (do_update_leds) {
-      hw.led2.Set(0, mainWet, reverbWet);
       hw.UpdateLeds();
       do_update_leds = false;
     }

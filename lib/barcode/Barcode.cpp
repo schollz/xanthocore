@@ -46,7 +46,6 @@ void Barcode::Init(float *tape, unsigned int numFrames, float sr,
 
 void Barcode::ToggleRecording(bool on) {
   if (on && !recording) {
-    setPlaying(false);
     voices.setRecFlag(0, true);
     voices.setRate(0, 1.0);
     voices.setRecLevel(0, 0.0);
@@ -60,6 +59,13 @@ void Barcode::ToggleRecording(bool on) {
     xfadeSamplesWait = xfadeSamples;
   }
   setRecording(on);
+}
+
+void Barcode::TogglePlaying(bool on) {
+  if (!on && playing) {
+    voices.setLevel(0, 0.0);
+  }
+  setPlaying(on);
 }
 
 void Barcode::Process(const float *inl, const float *inr, float *outl,
@@ -109,12 +115,14 @@ void Barcode::Process(const float *inl, const float *inr, float *outl,
         recordingStop = voices.getSavedPosition(0) - xfadeSeconds;
         // print recording stop
         voices.setLoopEnd(recordingStop);
-        // set all voices to random positions
-        for (size_t i = 0; i < NUM_VOICES; i++) {
-          voices.cutToPos(
-              i, static_cast<float>(rand()) / RAND_MAX * recordingStop);
+        if (!playing) {
+          // set all voices to random positions
+          for (size_t i = 0; i < NUM_VOICES; i++) {
+            voices.cutToPos(
+                i, static_cast<float>(rand()) / RAND_MAX * recordingStop);
+          }
+          setPlaying(true);
         }
-        setPlaying(true);
       }
     }
   }
