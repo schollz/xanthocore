@@ -11,9 +11,11 @@
 //
 #include "../../lib/App.h"
 #include "../../lib/barcode/Barcode.h"
+#include "../../lib/softcut/Utilities.h"
 using namespace softcut;
 
 App *app;
+Barcode *barcode;
 #ifdef INCLUDE_FVERB3
 FVerb3 fverb3;
 #endif
@@ -35,8 +37,10 @@ using namespace daisysp;
 
 DaisyPod hw;
 DaisySeed daisyseed;
+CpuLoadMeter loadMeter;
 Metro metroPrintTimer;
-Metro metroUpdateControls;
+LinearRamp knob1Slew;
+LinearRamp knob2Slew;
 float mainWet = 0.5;
 float reverbWet = 0.5;
 float reverbDry = 1.0 - reverbWet;
@@ -44,23 +48,45 @@ bool do_update_leds = false;
 
 float DSY_SDRAM_BSS tape_linear_buffer[MAX_SIZE];
 
-size_t audiocallback_sample_num = 0;
-float cpu_needed = 0.0f;
-float cpu_max_needed = 0.0f;
-uint32_t audiocallback_time_needed = 0;
-float cpu_usage_running[30] = {0};
-size_t cpu_usage_index = 0;
-float inl[AUDIO_BLOCK_SIZE];
-float inr[AUDIO_BLOCK_SIZE];
-float outl[AUDIO_BLOCK_SIZE];
-float outr[AUDIO_BLOCK_SIZE];
+bool button1Pressed = false;
+bool button2Pressed = false;
+bool updateDigitalOrAnalog = false;
 static void AudioCallback(AudioHandle::InputBuffer in,
                           AudioHandle::OutputBuffer out, size_t size) {
 #ifdef INCLUDE_AUDIO_PROFILING
   // measure - start
-  DWT->CYCCNT = 0;
-  audiocallback_sample_num = size / 2;
+  // DWT->CYCCNT = 0;
+  // audiocallback_sample_num = size / 2;
+  loadMeter.OnBlockStart();
 #endif
+
+  // compute controls
+  if (updateDigitalOrAnalog) {
+    hw.ProcessDigitalControls();
+    if (hw.button1.RisingEdge() && !button1Pressed) {
+      button1Pressed = true;
+      barcode->ToggleRecording(true);
+    } else if (hw.button1.RisingEdge() && button1Pressed) {
+      button1Pressed = false;
+      barcode->ToggleRecording(false);
+    }
+    if (hw.button2.RisingEdge() && !button2Pressed) {
+      button2Pressed = true;
+      barcode->TogglePlaying(true);
+    } else if (hw.button2.RisingEdge() && button2Pressed) {
+      button2Pressed = false;
+      barcode->TogglePlaying(false);
+    }
+  } else {
+    hw.ProcessAnalogControls();
+    knob1Slew.setTarget(hw.knob1.Process());
+    knob2Slew.setTarget(hw.knob2.Process());
+    app->setMainWet(knob1Slew.update());
+    reverbWet = knob2Slew.update();
+    fverb3.set_wet(reverbWet * 100);
+    fverb3.set_dry((1.0 - reverbWet) * 100);
+  }
+  updateDigitalOrAnalog = !updateDigitalOrAnalog;
 
   app->Process(in, out, AUDIO_BLOCK_SIZE);
 
@@ -68,35 +94,8 @@ static void AudioCallback(AudioHandle::InputBuffer in,
   fverb3.compute(out, AUDIO_BLOCK_SIZE);
 #endif
 
-  if (metroPrintTimer.Process()) {
-    // print hello
-
-    daisyseed.PrintLine("cpu needed: %2.1f, %2.3f, %2.2f", cpu_needed,
-                        app->getVoices().getSavedPosition(0),
-                        hw.knob1.Process());
-    // daisyseed.PrintLine("cpu needed: %2.1f, %2.2f", cpu_needed,
-    //                     hw.knob1.Process());
-  } else if (metroUpdateControls.Process()) {
-    float knob = 0;
-    knob = hw.knob1.Process();
-    if (mainWet != knob) {
-      mainWet = knob;
-      app->setMainWet(mainWet);
-      do_update_leds = true;
-    }
-    knob = hw.knob2.Process();
-    if (reverbWet != knob) {
-      reverbWet = knob;
-      reverbDry = 1.0 - reverbWet;
-      fverb3.set_wet(reverbWet * 100);
-      fverb3.set_dry(reverbDry * 100);
-      do_update_leds = true;
-    }
-  }
-
 #ifdef INCLUDE_AUDIO_PROFILING
-  audiocallback_time_needed = DWT->CYCCNT;
-  cpu_needed = (float)audiocallback_time_needed / CYCLES_AVAILBLE * 100.0f;
+  loadMeter.OnBlockEnd();
 #endif
 }
 
@@ -108,7 +107,6 @@ int main(void) {
 
 #ifdef INCLUDE_FVERB3
   fverb3.init(AUDIO_SAMPLE_RATE);
-  // fverb3.set_predelay(50);
   fverb3.set_input_diffusion_2(80);
   fverb3.set_tail_density(80);
   fverb3.set_decay(75);
@@ -117,22 +115,15 @@ int main(void) {
   // clear tape_linear_buffer
   memset(tape_linear_buffer, 0, sizeof(tape_linear_buffer));
 
-#ifdef INCLUDE_AUDIO_PROFILING
-  // setup measurement
-  // https://forum.electro-smith.com/t/solved-how-to-do-mcu-utilization-measurements/1236
-  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-  DWT->LAR = 0xC5ACCE55;
-  DWT->CYCCNT = 0;
-  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-#endif
+  knob1Slew = LinearRamp(AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE / 2, 0.2f);
+  knob2Slew = LinearRamp(AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE / 2, 0.2f);
 
-  metroPrintTimer.Init(10.0f, AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE);
-  metroUpdateControls.Init(30.0f, AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE);
+  metroPrintTimer.Init(10.0f, 1000);
 
   // print starting
   daisyseed.PrintLine("Loading barcode...");
   app = new Barcode();
-  Barcode *barcode = static_cast<Barcode *>(app);
+  barcode = static_cast<Barcode *>(app);
   app->Init(tape_linear_buffer, MAX_SIZE, AUDIO_SAMPLE_RATE, AUDIO_BLOCK_SIZE);
   app->registerCallback(
       static_cast<int>(Barcode::CallbackType::ON_RECORD_START),
@@ -173,31 +164,24 @@ int main(void) {
   hw.StartAudio(AudioCallback);
   hw.StartAdc();
   daisyseed.PrintLine("Audio started");
-  bool button1Pressed = false;
-  bool button2Pressed = false;
 
+  loadMeter.Init(hw.AudioSampleRate(), hw.AudioBlockSize());
   while (1) {
-    hw.ProcessDigitalControls();
-    hw.ProcessAnalogControls();
-
-    if (hw.button1.RisingEdge() && !button1Pressed) {
-      button1Pressed = true;
-      barcode->ToggleRecording(true);
-    } else if (hw.button1.RisingEdge() && button1Pressed) {
-      button1Pressed = false;
-      barcode->ToggleRecording(false);
-    }
-    if (hw.button2.RisingEdge() && !button2Pressed) {
-      button2Pressed = true;
-      barcode->TogglePlaying(true);
-    } else if (hw.button2.RisingEdge() && button2Pressed) {
-      button2Pressed = false;
-      barcode->TogglePlaying(false);
+    if (metroPrintTimer.Process()) {
+#ifdef INCLUDE_AUDIO_PROFILING
+      // print it to the serial connection (as percentages)
+      daisyseed.PrintLine("CPU Load " FLT_FMT3 "%% " FLT_FMT3 "%% " FLT_FMT3
+                          "%% ",
+                          FLT_VAR3(loadMeter.GetMinCpuLoad() * 100.0f),
+                          FLT_VAR3(loadMeter.GetAvgCpuLoad() * 100.0f),
+                          FLT_VAR3(loadMeter.GetMaxCpuLoad() * 100.0f));
+#endif
     }
 
     if (do_update_leds) {
       hw.UpdateLeds();
       do_update_leds = false;
     }
+    System::Delay(1);
   }
 }
