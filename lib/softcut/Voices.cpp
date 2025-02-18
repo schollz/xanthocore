@@ -131,8 +131,8 @@ void Voices::setRecLevel(size_t voice, float val) {
   voices[voice].setRecLevel(val);
 }
 
-void Voices::process(const float *inl, const float *inr, float *outl,
-                     float *outr, unsigned int numFrames) {
+void Voices::process(const float *const *in, float **out,
+                     unsigned int numFrames) {
   for (size_t i = 0; i < NUM_VOICES; i++) {
     if (voices[i].getPlayFlag() == false) {
       continue;
@@ -140,21 +140,21 @@ void Voices::process(const float *inl, const float *inr, float *outl,
     float output[numFrames];
     memset(output, 0, numFrames * sizeof(float));
     if (inputBus[i] == 0) {
-      voices[i].processBlockMono(inl, output, numFrames);
+      voices[i].processBlockMono(in[0], output, numFrames);
     } else {
-      voices[i].processBlockMono(inr, output, numFrames);
+      voices[i].processBlockMono(in[1], output, numFrames);
     }
     for (size_t j = 0; j < numFrames; j++) {
       output[j] *= levelsSet[i];
-      outl[j] += output[j] * panningL[i];
-      outr[j] += output[j] * panningR[i];
+      out[0][j] += output[j] * panningL[i];
+      out[1][j] += output[j] * panningR[i];
     }
   }
   // wet/dry mix
   float mainWet = wetDrySlew.update();
   float mainDry = 1.0f - mainWet;
   for (size_t i = 0; i < numFrames; i++) {
-    outl[i] = mainWet * outl[i] + mainDry * inl[i];
-    outr[i] = mainWet * outr[i] + mainDry * inr[i];
+    out[0][i] = mainWet * out[0][i] + mainDry * in[0][i];
+    out[1][i] = mainWet * out[1][i] + mainDry * in[1][i];
   }
 }

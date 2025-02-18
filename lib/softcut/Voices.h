@@ -59,8 +59,7 @@ class Voices {
   void setMainWet(float val) { wetDrySlew.setTarget(val); }
   float getSavedPosition(size_t voice);
 
-  void process(const float *inl, const float *inr, float *outl, float *outr,
-               unsigned int numFrames);
+  void process(const float *const *in, float **out, unsigned int numFrames);
 
  private:
   Voice voices[NUM_VOICES];

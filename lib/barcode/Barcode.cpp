@@ -68,8 +68,8 @@ void Barcode::TogglePlaying(bool on) {
   setPlaying(on);
 }
 
-void Barcode::Process(const float *inl, const float *inr, float *outl,
-                      float *outr, unsigned int numFrames) {
+void Barcode::Process(const float *const *in, float **out,
+                      unsigned int numFrames) {
   if (playing) {
     for (size_t i = 0; i < NUM_VOICES; i++) {
       for (size_t j = 0; j < NUM_OSCILLATORS; j++) {
@@ -127,5 +127,5 @@ void Barcode::Process(const float *inl, const float *inr, float *outl,
     }
   }
 
-  voices.process(inl, inr, outl, outr, numFrames);
+  voices.process(in, out, numFrames);
 }

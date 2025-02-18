@@ -35,7 +35,7 @@ class Barcode : public App {
   Barcode() = default;
   void Init(float *tape, unsigned int numFrames, float sr,
             float audioblockSize) override;
-  void Process(const float *inl, const float *inr, float *outl, float *outr,
+  void Process(const float *const *in, float **out,
                unsigned int numFrames) override;
   Voices &getVoices() override { return voices; }
   void setMainWet(float val) { voices.setMainWet(val); }

@@ -662,8 +662,7 @@ class FVerb3 final {
   void set_input(float value) { fHslider6 = value; }
   void set_predelay(float value) { fHslider7 = value; }
 
-  void compute(int count, float *input0, float *input1, float *output0,
-               float *output1) {
+  void compute(float **inout, int count) {
     float fSlow0 = fConst1 * std::exp(-(fConst3 * float(fHslider0)));
     float fSlow1 = fConst4 * float(fHslider1);
     float fSlow2 = fConst4 * float(fHslider2);
@@ -687,7 +686,7 @@ class FVerb3 final {
       fRec25[0] = fSlow5 + fConst2 * fRec25[1];
       float fTemp1 = 1.0f - fRec25[0];
       fRec27[0] = fSlow6 + fConst2 * fRec27[1];
-      float fTemp2 = float(input1[i0]);
+      float fTemp2 = float(inout[1][i0]);
       fVec0_FVerb3[IOTA0 & 131071] = fTemp2 * fRec27[0];
       fRec28[0] = fSlow7 + fConst2 * fRec28[1];
       // int iTemp3 =
@@ -778,7 +777,7 @@ class FVerb3 final {
       fRec0_FVerb3[IOTA0 & 32767] = fRec7 + fRec6[1];
       fRec1_FVerb3[IOTA0 & 16383] = fRec9[0] * fTemp0;
       fRec2_FVerb3[IOTA0 & 32767] = fTemp14;
-      float fTemp17 = float(input0[i0]);
+      float fTemp17 = float(inout[0][i0]);
       fVec9_FVerb3[IOTA0 & 131071] = fTemp17 * fRec27[0];
       fRec52[0] =
           fVec9_FVerb3[(IOTA0 - iTemp3) & 131071] + fRec25[0] * fRec52[1];
@@ -851,24 +850,24 @@ class FVerb3 final {
       fRec5_FVerb3[IOTA0 & 32767] = fTemp26;
       fRec57[0] = fSlow11 + fConst2 * fRec57[1];
       fRec58[0] = fSlow12 + fConst2 * fRec58[1];
-      output0[i0] = float(fTemp17 * fRec58[0] +
-                          0.6f * fRec57[0] *
-                              (fRec2_FVerb3[(IOTA0 - iConst28) & 32767] +
-                               fRec2_FVerb3[(IOTA0 - iConst27) & 32767] +
-                               fRec0_FVerb3[(IOTA0 - iConst26) & 32767] -
-                               (fRec1_FVerb3[(IOTA0 - iConst25) & 16383] +
-                                fRec5_FVerb3[(IOTA0 - iConst24) & 32767] +
-                                fRec4_FVerb3[(IOTA0 - iConst23) & 8191] +
-                                fRec3_FVerb3[(IOTA0 - iConst22) & 32767])));
-      output1[i0] = float(fTemp2 * fRec58[0] +
-                          0.6f * fRec57[0] *
-                              (fRec5_FVerb3[(IOTA0 - iConst35) & 32767] +
-                               fRec5_FVerb3[(IOTA0 - iConst34) & 32767] +
-                               fRec3_FVerb3[(IOTA0 - iConst33) & 32767] -
-                               (fRec4_FVerb3[(IOTA0 - iConst32) & 8191] +
-                                fRec2_FVerb3[(IOTA0 - iConst31) & 32767] +
-                                fRec1_FVerb3[(IOTA0 - iConst30) & 16383] +
-                                fRec0_FVerb3[(IOTA0 - iConst29) & 32767])));
+      inout[0][i0] = float(fTemp17 * fRec58[0] +
+                           0.6f * fRec57[0] *
+                               (fRec2_FVerb3[(IOTA0 - iConst28) & 32767] +
+                                fRec2_FVerb3[(IOTA0 - iConst27) & 32767] +
+                                fRec0_FVerb3[(IOTA0 - iConst26) & 32767] -
+                                (fRec1_FVerb3[(IOTA0 - iConst25) & 16383] +
+                                 fRec5_FVerb3[(IOTA0 - iConst24) & 32767] +
+                                 fRec4_FVerb3[(IOTA0 - iConst23) & 8191] +
+                                 fRec3_FVerb3[(IOTA0 - iConst22) & 32767])));
+      inout[1][i0] = float(fTemp2 * fRec58[0] +
+                           0.6f * fRec57[0] *
+                               (fRec5_FVerb3[(IOTA0 - iConst35) & 32767] +
+                                fRec5_FVerb3[(IOTA0 - iConst34) & 32767] +
+                                fRec3_FVerb3[(IOTA0 - iConst33) & 32767] -
+                                (fRec4_FVerb3[(IOTA0 - iConst32) & 8191] +
+                                 fRec2_FVerb3[(IOTA0 - iConst31) & 32767] +
+                                 fRec1_FVerb3[(IOTA0 - iConst30) & 16383] +
+                                 fRec0_FVerb3[(IOTA0 - iConst29) & 32767])));
       fRec8[1] = fRec8[0];
       fRec12[1] = fRec12[0];
       fRec15[1] = fRec15[0];

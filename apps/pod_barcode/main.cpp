@@ -54,68 +54,19 @@ float inl[AUDIO_BLOCK_SIZE];
 float inr[AUDIO_BLOCK_SIZE];
 float outl[AUDIO_BLOCK_SIZE];
 float outr[AUDIO_BLOCK_SIZE];
-static void AudioCallback(AudioHandle::InterleavingInputBuffer in,
-                          AudioHandle::InterleavingOutputBuffer out,
-                          size_t size) {
+static void AudioCallback(AudioHandle::InputBuffer in,
+                          AudioHandle::OutputBuffer out, size_t size) {
 #ifdef INCLUDE_AUDIO_PROFILING
   // measure - start
   DWT->CYCCNT = 0;
   audiocallback_sample_num = size / 2;
 #endif
 
-  // Deinterleave input samples
-  for (size_t i = 0; i < size; i += 2) {
-    inl[i / 2] = in[i];      // Left channel
-    inr[i / 2] = in[i + 1];  // Right channel
-    outl[i / 2] = 0;
-    outr[i / 2] = 0;
-  }
-
-  app->Process(inl, inr, outl, outr, AUDIO_BLOCK_SIZE);
-  for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
-    inl[i] = outl[i];
-    inr[i] = outr[i];
-  }
+  app->Process(in, out, AUDIO_BLOCK_SIZE);
 
 #ifdef INCLUDE_FVERB3
-  fverb3.compute(AUDIO_BLOCK_SIZE, inl, inr, outl, outr);
-
-  // // Downsample to 24000 sample rate
-  // float downsampled_inl[AUDIO_BLOCK_SIZE / 2];
-  // float downsampled_inr[AUDIO_BLOCK_SIZE / 2];
-  // for (size_t i = 0; i < AUDIO_BLOCK_SIZE / 2; i++) {
-  //   downsampled_inl[i] = inl[i * 2];
-  //   downsampled_inr[i] = inr[i * 2];
-  // }
-
-  // // Process with FVerb3
-  // float downsampled_outl[AUDIO_BLOCK_SIZE / 2];
-  // float downsampled_outr[AUDIO_BLOCK_SIZE / 2];
-  // fverb3.compute(AUDIO_BLOCK_SIZE / 2, downsampled_inl, downsampled_inr,
-  //                downsampled_outl, downsampled_outr);
-
-  // // Upsample back to 48000 sample rate
-  // for (size_t i = 0; i < AUDIO_BLOCK_SIZE / 2; i++) {
-  //   outl[i * 2] = downsampled_outl[i];
-  //   outl[i * 2 + 1] = downsampled_outl[i];
-  //   outr[i * 2] = downsampled_outr[i];
-  //   outr[i * 2 + 1] = downsampled_outr[i];
-  // }
-
+  fverb3.compute(out, AUDIO_BLOCK_SIZE);
 #endif
-
-  // for (unsigned int i = 0; i < AUDIO_BLOCK_SIZE; i++) {
-  //   float outl_, outr_;
-  //   reverb.Process(outl[i], outr[i], &outl_, &outr_);
-  //   outl[i] = reverbWet * outl_ + reverbDry * outl[i];
-  //   outr[i] = reverbWet * outr_ + reverbDry * outr[i];
-  // }
-
-  // Interleave output samples
-  for (size_t i = 0; i < size; i += 2) {
-    out[i] = outl[i / 2];      // Left channel
-    out[i + 1] = outr[i / 2];  // Right channel
-  }
 
   if (metroPrintTimer.Process()) {
     // print hello
