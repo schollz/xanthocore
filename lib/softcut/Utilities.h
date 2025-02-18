@@ -154,8 +154,7 @@ class LinearRamp {
     setTime(t);
   }
 
-  float process(float target) {
-    setTarget(target);
+  float update() {
     val += inc;
     if (rising) {
       if (val > target) {
@@ -167,6 +166,11 @@ class LinearRamp {
       }
     }
     return val;
+  }
+
+  float process(float target) {
+    setTarget(target);
+    return update();
   }
 };
 

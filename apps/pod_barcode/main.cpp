@@ -38,6 +38,7 @@ DaisyPod hw;
 DaisySeed daisyseed;
 Metro metroPrintTimer;
 Metro metroUpdateControls;
+float mainWet = 0.5;
 float reverbWet = 0.5;
 float reverbDry = 1.0 - reverbWet;
 bool do_update_leds = false;
@@ -126,11 +127,21 @@ static void AudioCallback(AudioHandle::InterleavingInputBuffer in,
     // daisyseed.PrintLine("cpu needed: %2.1f, %2.2f", cpu_needed,
     //                     hw.knob1.Process());
   } else if (metroUpdateControls.Process()) {
-    app->setMainWet(hw.knob1.Process());
-    reverbWet = hw.knob2.Process();
-    reverbDry = 1.0 - reverbWet;
-    fverb3.set_wet(reverbWet * 100);
-    fverb3.set_dry(reverbDry * 100);
+    float knob = 0;
+    knob = hw.knob1.Process();
+    if (mainWet != knob) {
+      mainWet = knob;
+      app->setMainWet(mainWet);
+      do_update_leds = true;
+    }
+    knob = hw.knob2.Process();
+    if (reverbWet != knob) {
+      reverbWet = knob;
+      reverbDry = 1.0 - reverbWet;
+      fverb3.set_wet(reverbWet * 100);
+      fverb3.set_dry(reverbDry * 100);
+      do_update_leds = true;
+    }
   }
 
 #ifdef INCLUDE_AUDIO_PROFILING
@@ -168,13 +179,6 @@ int main(void) {
   metroPrintTimer.Init(10.0f, AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE);
   metroUpdateControls.Init(30.0f, AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE);
 
-  // hw.led1.Set(1, 0, 0);
-  // hw.UpdateLeds();
-  // while (true) {
-  //   System::Delay(1000);
-  //   daisyseed.PrintLine("Hello, World!");
-  // }
-  // System::Delay(3000);
   // print starting
   daisyseed.PrintLine("Loading barcode...");
   app = new Barcode();
@@ -232,8 +236,9 @@ int main(void) {
     }
 
     if (do_update_leds) {
+      hw.led2.Set(0, mainWet, reverbWet);
       hw.UpdateLeds();
+      do_update_leds = false;
     }
-    System::Delay(6);
   }
 }

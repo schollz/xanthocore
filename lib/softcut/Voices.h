@@ -1,15 +1,17 @@
 #ifndef Softcut_Voices_H
 #define Softcut_Voices_H
 
+#include "Utilities.h"
 #include "Voice.h"
 
-#define NUM_VOICES 6
+#define NUM_VOICES 4
 
 namespace softcut {
 class Voices {
  public:
   Voices();
-  void init(float *buf, unsigned int numFrames, float sampleRate);
+  void init(float *buf, unsigned int numFrames, float sampleRate,
+            float audioblockSize);
   void setTape(size_t voice, size_t index);
   void setRate(size_t voice, float rate);
   void setDB(size_t voice, float db);
@@ -60,7 +62,9 @@ class Voices {
   float panning[NUM_VOICES];
   float panningL[NUM_VOICES];
   float panningR[NUM_VOICES];
-  float levels[NUM_VOICES];
+  float levelsSet[NUM_VOICES];
+  float levelsCur[NUM_VOICES];
+  LinearRamp levelSlew[NUM_VOICES];
   float inputBus[NUM_VOICES];
   bool playing[NUM_VOICES];
   float mainWet = 0.5;

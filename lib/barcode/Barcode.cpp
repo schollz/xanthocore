@@ -9,7 +9,7 @@ void Barcode::Init(float *tape, unsigned int numFrames, float sr,
   xfadeSamples = (10 * audioblockSize);
   xfadeSeconds = static_cast<float>(xfadeSamples) / sr;
 
-  voices.init(tape, numFrames, sr);
+  voices.init(tape, numFrames, sr, audioblockSize);
   // make all voices uses the same tape
   for (size_t i = 0; i < NUM_VOICES; i++) {
     voices.setTape(i, 0);

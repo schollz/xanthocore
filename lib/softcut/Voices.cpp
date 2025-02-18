@@ -6,15 +6,21 @@
 #define VOICES_TAPE_BUFFER 3.0f
 using namespace softcut;
 
-Voices::Voices() {}
+Voices::Voices()
+    : levelSlew{LinearRamp(48000), LinearRamp(48000), LinearRamp(48000),
+                LinearRamp(48000)}  // Initialize with sample rate
+{}
 
-void Voices::init(float *tape, unsigned int numFrames, float sr) {
+void Voices::init(float *tape, unsigned int numFrames, float sr,
+                  float audioblockSize) {
   // erase tape
   memset(tape, 0, numFrames * sizeof(float));
   bufFrames = numFrames;
   sampleRate = sr;
 
   for (size_t i = 0; i < NUM_VOICES; i++) {
+    levelSlew[i].setSampleRate(sr);
+    levelSlew[i].setTime(5);
     loopStart[i] = 0;
     loopEnd[i] = 2;
     panning[i] = 0.1;  // this will be set
@@ -114,7 +120,8 @@ void Voices::setPan(size_t voice, float pan) {
 
 void Voices::setLevel(size_t voice, float level) {
   level = fclamp(level, 0.0f, 2.0f);
-  levels[voice] = level / (float)NUM_VOICES;
+  levelsSet[voice] = level / (float)NUM_VOICES;
+  levelSlew[voice].setTarget(levelsSet[voice]);
 }
 
 void Voices::setDB(size_t voice, float db) { setLevel(voice, dbamp(db)); }
@@ -140,8 +147,10 @@ void Voices::process(const float *inl, const float *inr, float *outl,
     } else {
       voices[i].processBlockMono(inr, output, numFrames);
     }
+    // levelsCur[i] = levelSlew[i].update();
+    //  levelsCur[i] = levelsSet[i];
     for (size_t j = 0; j < numFrames; j++) {
-      output[j] *= levels[i];
+      output[j] *= levelSlew[i].update();
       outl[j] += output[j] * panningL[i];
       outr[j] += output[j] * panningR[i];
     }
