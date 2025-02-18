@@ -6,17 +6,14 @@
 #define VOICES_TAPE_BUFFER 3.0f
 using namespace softcut;
 
-Voices::Voices()
-    : levelSlew{LinearRamp(48000), LinearRamp(48000), LinearRamp(48000),
-                LinearRamp(48000)}  // Initialize with sample rate
-{}
-
 void Voices::init(float *tape, unsigned int numFrames, float sr,
                   float audioblockSize) {
   // erase tape
   memset(tape, 0, numFrames * sizeof(float));
   bufFrames = numFrames;
   sampleRate = sr;
+  wetDrySlew.setSampleRate(sr / audioblockSize);
+  wetDrySlew.setTime(0.2);
 
   for (size_t i = 0; i < NUM_VOICES; i++) {
     levelSlew[i].setSampleRate(sr);
@@ -147,19 +144,17 @@ void Voices::process(const float *inl, const float *inr, float *outl,
     } else {
       voices[i].processBlockMono(inr, output, numFrames);
     }
-    // levelsCur[i] = levelSlew[i].update();
-    //  levelsCur[i] = levelsSet[i];
     for (size_t j = 0; j < numFrames; j++) {
-      output[j] *= levelSlew[i].update();
+      output[j] *= levelsSet[i];
       outl[j] += output[j] * panningL[i];
       outr[j] += output[j] * panningR[i];
     }
   }
   // wet/dry mix
-  if (mainDry > 0) {
-    for (size_t i = 0; i < numFrames; i++) {
-      outl[i] = mainWet * outl[i] + mainDry * inl[i];
-      outr[i] = mainWet * outr[i] + mainDry * inr[i];
-    }
+  float mainWet = wetDrySlew.update();
+  float mainDry = 1.0f - mainWet;
+  for (size_t i = 0; i < numFrames; i++) {
+    outl[i] = mainWet * outl[i] + mainDry * inl[i];
+    outr[i] = mainWet * outr[i] + mainDry * inr[i];
   }
 }

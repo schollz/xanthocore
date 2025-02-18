@@ -116,62 +116,78 @@ class RunningAverage {
     return sum / size;
   }
 };
-
 class LinearRamp {
  private:
-  float sampleRate;
-  float target;
-  float inc;
-  float time;
-  float val;
-  bool rising;
+  float sampleRate{48000.f};  // Default sample rate
+  float target{0.f};
+  float inc{0.f};
+  float time{0.0001f};
+  float val{0.f};
+  bool rising{false};
 
- private:
   void calcInc() {
-    float d = target - val;
-    rising = d > 0.f;
-    inc = d / (time * sampleRate);
+    if (time > 0.f && sampleRate > 0.f) {
+      float d = target - val;
+      rising = d > 0.f;
+      inc = d / (time * sampleRate);
+    } else {
+      inc = 0.f;
+    }
   }
 
  public:
-  void setSampleRate(float sr) {
-    sampleRate = sr;
-    setTime(time);
+  // **Default Constructor**
+  LinearRamp() = default;
+
+  // **Parameterized Constructor**
+  LinearRamp(float sr, float t = 0.0001f) : sampleRate(sr), time(t) {
+    calcInc();
   }
 
+  // **Set Sample Rate and Recalculate**
+  void setSampleRate(float sr) {
+    sampleRate = sr;
+    calcInc();
+  }
+
+  // **Set Slew Time and Recalculate**
   void setTime(float t) {
     time = t;
     calcInc();
   }
 
+  // **Set Target and Recalculate**
   void setTarget(float t) {
-    target = t;
-    calcInc();
+    if (t != target) {  // Avoid unnecessary recalculations
+      target = t;
+      calcInc();
+    }
   }
 
-  LinearRamp(float sr, float t = 0.0001)
-      : sampleRate(sr), target(0.f), val(0.f), rising(false) {
-    setTime(t);
-  }
-
+  // **Update Value Towards Target**
   float update() {
+    if (inc == 0.f) {
+      return val;
+    }
     val += inc;
-    if (rising) {
-      if (val > target) {
-        val = target;
-      }
-    } else {
-      if (val < target) {
-        val = target;
-      }
+    if ((rising && val > target) || (!rising && val < target)) {
+      val = target;
+      inc = 0.f;  // Stop further unnecessary updates
     }
     return val;
   }
 
-  float process(float target) {
-    setTarget(target);
+  // **Process: Set Target & Update in One Step**
+  float process(float newTarget) {
+    setTarget(newTarget);
     return update();
   }
+
+  // **Get Current Value**
+  float getValue() const { return val; }
+
+  // **Check if Ramp is Moving**
+  bool isMoving() const { return val != target; }
 };
 
 // logarithmic interpolator (aka 1-pole LPF)
