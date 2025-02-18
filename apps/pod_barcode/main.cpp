@@ -82,7 +82,7 @@ static void AudioCallback(AudioHandle::InputBuffer in,
     knob1Slew.setTarget(hw.knob1.Process());
     knob2Slew.setTarget(hw.knob2.Process());
     app->setMainWet(knob1Slew.update());
-    reverbWet = knob2Slew.update();
+    reverbWet = hw.knob2.Process();
     fverb3.set_wet(reverbWet * 100);
     fverb3.set_dry((1.0 - reverbWet) * 100);
   }
@@ -91,7 +91,7 @@ static void AudioCallback(AudioHandle::InputBuffer in,
   app->Process(in, out, AUDIO_BLOCK_SIZE);
 
 #ifdef INCLUDE_FVERB3
-  fverb3.compute(out, AUDIO_BLOCK_SIZE);
+  // fverb3.compute(out, AUDIO_BLOCK_SIZE);
 #endif
 
 #ifdef INCLUDE_AUDIO_PROFILING
