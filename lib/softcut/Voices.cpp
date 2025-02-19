@@ -112,7 +112,7 @@ void Voices::setPan(size_t voice, float pan) {
 }
 
 void Voices::setLevel(size_t voice, float level) {
-  levels[voice] = fclamp(level, 0.0f, 2.0f) / (float)NUM_VOICES;
+  levels[voice] = fclamp(level, 0.0f, 2.0f) / ((float)NUM_VOICES / 2);
 }
 
 void Voices::setDB(size_t voice, float db) { setLevel(voice, dbamp(db)); }
@@ -138,6 +138,7 @@ void Voices::process(const float *const *in, float **out,
     } else {
       voices[i].processBlockMono(in[1], output, numFrames);
     }
+
     for (size_t j = 0; j < numFrames; j++) {
       output[j] *= levels[i];
       out[0][j] += output[j] * panningL[i];

@@ -1,4 +1,7 @@
 
+#define AUDIO_SAMPLE_RATE 32000  // 32000 or 48000
+#define AUDIO_BLOCK_SIZE 128
+
 #define INCLUDE_FVERB3
 
 #include "core_cm7.h"
@@ -12,28 +15,23 @@
 #include "../../lib/App.h"
 #include "../../lib/barcode/Barcode.h"
 #include "../../lib/softcut/Utilities.h"
+
+// add namespaces
 using namespace softcut;
+using namespace daisy;
+using namespace daisysp;
 
 App *app;
 Barcode *barcode;
 #ifdef INCLUDE_FVERB3
 FVerb3 fverb3;
 #endif
-uint8_t DMA_BUFFER_MEM_SECTION buffer_spi[4];
 #define INCLUDE_AUDIO_PROFILING 1
-#define RP2040_I2C_ADDRESS 0x28
-#define AUDIO_BLOCK_SIZE 128
-#define AUDIO_SAMPLE_RATE 32000  // 32000 or 48000
-#define CROSSFADE_PREROLL 4800
-double CYCLES_AVAILBLE =
-    ((400000000.0d * (double)AUDIO_BLOCK_SIZE) / (double)AUDIO_SAMPLE_RATE);
 #ifdef INCLUDE_FVERB3
 #define MAX_SIZE (2 << 22)
 #else
 #define MAX_SIZE (2 << 22)
 #endif
-using namespace daisy;
-using namespace daisysp;
 
 DaisyPod hw;
 DaisySeed daisyseed;
@@ -41,6 +39,8 @@ CpuLoadMeter loadMeter;
 Metro metroPrintTimer;
 LinearRamp knob1Slew;
 LinearRamp knob2Slew;
+DcBlock dcblock[2];
+
 float mainWet = 0.5;
 float reverbWet = 0.5;
 float reverbDry = 1.0 - reverbWet;
@@ -79,19 +79,50 @@ static void AudioCallback(AudioHandle::InputBuffer in,
     }
   } else {
     hw.ProcessAnalogControls();
-    knob1Slew.setTarget(hw.knob1.Process());
-    knob2Slew.setTarget(hw.knob2.Process());
+    float val = hw.knob1.Process();
+    if (val < 0.02) {
+      val = 0.0;
+    } else if (val > 0.98) {
+      val = 1.0;
+    }
+    knob1Slew.setTarget(val);
+    val = hw.knob2.Process();
+    if (val < 0.02) {
+      val = 0.0;
+    } else if (val > 0.98) {
+      val = 1.0;
+    }
+    knob2Slew.setTarget(val);
     app->setMainWet(knob1Slew.update());
     reverbWet = hw.knob2.Process();
+#ifdef INCLUDE_FVERB3
     fverb3.set_wet(reverbWet * 100);
     fverb3.set_dry((1.0 - reverbWet) * 100);
+#endif
   }
   updateDigitalOrAnalog = !updateDigitalOrAnalog;
 
+  // clear out
+  for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+    out[0][i] = 0;
+    out[1][i] = 0;
+  }
+
   app->Process(in, out, AUDIO_BLOCK_SIZE);
 
+  // DC block
+  for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+    out[0][i] = dcblock[0].Process(out[0][i]);
+    out[1][i] = dcblock[1].Process(out[1][i]);
+  }
+  // // add tanf to the output
+  // for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+  //   out[0][i] = tanf(out[0][i]) / 2;
+  //   out[1][i] = tanf(out[1][i]) / 2;
+  // }
+
 #ifdef INCLUDE_FVERB3
-  // fverb3.compute(out, AUDIO_BLOCK_SIZE);
+  fverb3.compute(out, AUDIO_BLOCK_SIZE);
 #endif
 
 #ifdef INCLUDE_AUDIO_PROFILING
@@ -105,6 +136,9 @@ int main(void) {
   hw.Init(true);
   daisyseed.StartLog(false);
 
+  for (size_t i = 0; i < 2; i++) {
+    dcblock[i].Init(hw.AudioSampleRate());
+  }
 #ifdef INCLUDE_FVERB3
   fverb3.init(AUDIO_SAMPLE_RATE);
   fverb3.set_input_diffusion_2(80);
@@ -155,12 +189,21 @@ int main(void) {
   daisyseed.PrintLine("Barcode loaded");
 
   daisyseed.PrintLine("Starting audio...");
-  hw.SetAudioBlockSize(AUDIO_BLOCK_SIZE);
+  SaiHandle::Config sai_config;
   if (AUDIO_SAMPLE_RATE == 32000) {
-    SaiHandle::Config sai_config;
     sai_config.sr = SaiHandle::Config::SampleRate::SAI_32KHZ;
     hw.SetAudioSampleRate(sai_config.sr);
+  } else if (AUDIO_SAMPLE_RATE == 48000) {
+    sai_config.sr = SaiHandle::Config::SampleRate::SAI_48KHZ;
+    hw.SetAudioSampleRate(sai_config.sr);
+  } else {
+    // create an infinite loop
+    while (1) {
+      System::Delay(1000);
+      daisyseed.PrintLine("Invalid sample rate");
+    }
   }
+  hw.SetAudioBlockSize(AUDIO_BLOCK_SIZE);
   hw.StartAudio(AudioCallback);
   hw.StartAdc();
   daisyseed.PrintLine("Audio started");
@@ -176,12 +219,15 @@ int main(void) {
                           FLT_VAR3(loadMeter.GetAvgCpuLoad() * 100.0f),
                           FLT_VAR3(loadMeter.GetMaxCpuLoad() * 100.0f));
 #endif
+      // print position of voice 0
+      daisyseed.PrintLine("Position: %f",
+                          barcode->getVoices().getSavedPosition(0));
     }
 
     if (do_update_leds) {
       hw.UpdateLeds();
       do_update_leds = false;
     }
-    System::Delay(1);
+    System::Delay(10);
   }
 }
