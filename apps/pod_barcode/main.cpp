@@ -14,8 +14,8 @@
 //
 #include "../../lib/App.h"
 #include "../../lib/barcode/Barcode.h"
+#include "../../lib/reverb2/Reverb2.h"
 #include "../../lib/softcut/Utilities.h"
-
 // add namespaces
 using namespace softcut;
 using namespace daisy;
@@ -23,6 +23,7 @@ using namespace daisysp;
 
 App *app;
 Barcode *barcode;
+Reverb2 reverb;
 #ifdef INCLUDE_FVERB3
 FVerb3 fverb3;
 #endif
@@ -47,6 +48,7 @@ float reverbDry = 1.0 - reverbWet;
 bool do_update_leds = false;
 
 float DSY_SDRAM_BSS tape_linear_buffer[MAX_SIZE];
+float DSY_SDRAM_BSS reverb_buffer[DSY_REVERB2_MAX_SIZE];
 
 bool button1Pressed = false;
 bool button2Pressed = false;
@@ -94,7 +96,8 @@ static void AudioCallback(AudioHandle::InputBuffer in,
     }
     knob2Slew.setTarget(val);
     app->setMainWet(knob1Slew.update());
-    reverbWet = hw.knob2.Process();
+    reverbWet = knob2Slew.update();
+    reverb.SetWet(reverbWet);
 #ifdef INCLUDE_FVERB3
     fverb3.set_wet(reverbWet * 100);
     fverb3.set_dry((1.0 - reverbWet) * 100);
@@ -115,6 +118,8 @@ static void AudioCallback(AudioHandle::InputBuffer in,
     out[0][i] = dcblock[0].Process(out[0][i]);
     out[1][i] = dcblock[1].Process(out[1][i]);
   }
+
+  reverb.Process(out, out, AUDIO_BLOCK_SIZE);
   // // add tanf to the output
   // for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
   //   out[0][i] = tanf(out[0][i]) / 2;
@@ -145,6 +150,8 @@ int main(void) {
   fverb3.set_tail_density(80);
   fverb3.set_decay(75);
 #endif
+
+  reverb.Init(hw.AudioSampleRate(), reverb_buffer);
 
   // clear tape_linear_buffer
   memset(tape_linear_buffer, 0, sizeof(tape_linear_buffer));
