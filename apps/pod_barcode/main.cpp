@@ -1,8 +1,8 @@
 
-#define AUDIO_SAMPLE_RATE 32000  // 32000 or 48000
+#define AUDIO_SAMPLE_RATE 48000  // 32000 or 48000
 #define AUDIO_BLOCK_SIZE 128
 
-#define INCLUDE_FVERB3
+// #define INCLUDE_FVERB3
 
 #include "core_cm7.h"
 #include "daisy_pod.h"

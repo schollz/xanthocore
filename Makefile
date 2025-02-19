@@ -14,6 +14,11 @@ upload: pod_barcode
 	PATH=$(HOME)/bin/gcc-arm-none-eabi-10-2020-q4-major/bin:$$PATH \
 	/usr/bin/make -f ./apps/pod_barcode/Makefile  program-dfu 
 
+upload-sram: pod_barcode
+	LD_LIBRARY_PATH=$(HOME)/bin/gcc-arm-none-eabi-10-2020-q4-major/arm-none-eabi/lib:$$LD_LIBRARY_PATH \
+	PATH=$(HOME)/bin/gcc-arm-none-eabi-10-2020-q4-major/bin:$$PATH \
+	/usr/bin/make -f ./apps/pod_barcode/Makefile  program-boot
+
 lib/DaisySP/core:
 	git submodule update --init --recursive
 	cd lib/DaisySP && make -j$(CORES)

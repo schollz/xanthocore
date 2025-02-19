@@ -2,7 +2,8 @@ TARGET = xanthocore
 
 USE_DAISYSP_LGPL = 1
 
-APP_TYPE=BOOT_QSPI
+# APP_TYPE=BOOT_QSPI
+APP_TYPE=BOOT_SRAM
 
 CPP_SOURCES = apps/pod_barcode/main.cpp \
 	lib/softcut/FadeCurves.cpp \
