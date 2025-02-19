@@ -20,6 +20,8 @@
 #define M_PI 3.14159265358979323846 /* pi */
 #endif
 
+using namespace daisysp;
+
 /* kReverbParams[n][0] = delay time (in seconds)                     */
 /* kReverbParams[n][1] = random variation in delay time (in seconds) */
 /* kReverbParams[n][2] = random variation frequency (in 1/sec)       */
@@ -41,7 +43,9 @@ static int DelayLineBytesAlloc(float sr, float i_pitch_mod, int n);
 static const float kOutputGain = 0.35;
 static const float kJpScale = 0.25;
 
-int Reverb2::Init(float sr) {
+int Reverb2::Init(float sr, float *buf) {
+  wet_ = 0.5;
+  dry_ = 0.5;
   i_sample_rate_ = sr;
   sample_rate_ = sr;
   feedback_ = 0.97;
@@ -52,9 +56,10 @@ int Reverb2::Init(float sr) {
   prv_lpfreq_ = 0.0;
   init_done_ = 1;
   int i, n_bytes = 0;
+  aux_ = buf;
   n_bytes = 0;
   for (i = 0; i < 8; i++) {
-    if (n_bytes > DSY_Reverb2_MAX_SIZE) return 1;
+    if (n_bytes > DSY_REVERB2_MAX_SIZE) return 1;
     delay_lines_[i].buf = (aux_) + n_bytes;
     InitDelayLine(&delay_lines_[i], i);
     n_bytes += DelayLineBytesAlloc(sr, 1, i);
@@ -125,6 +130,20 @@ int Reverb2::InitDelayLine(Reverb2Dl *lp, int n) {
     lp->buf[i] = 0;
   }
   return REVSC_OK;
+}
+
+void Reverb2::Process(const float *const *in, float **out, size_t num) {
+  for (size_t i = 0; i < num; i++) {
+    float outl, outr;
+    Process(in[0][i], in[1][i], &outl, &outr);
+    out[0][i] = outl * wet_ + in[0][i] * dry_;
+    out[1][i] = outr * wet_ + in[1][i] * dry_;
+  }
+}
+
+void Reverb2::SetWet(float wet) {
+  wet_ = wet;
+  dry_ = 1.0f - wet;
 }
 
 int Reverb2::Process(const float &in1, const float &in2, float *out1,

@@ -8,11 +8,12 @@ https://opensource.org/license/lgpl-2-1/
 */
 
 #pragma once
-#ifndef DSYSP_Reverb2_H
-#define DSYSP_Reverb2_H
+#ifndef DSYSP_REVERB2_H
+#define DSYSP_REVERB2_H
 
-#define DSY_Reverb2_MAX_SIZE (98936 / 4)
+#define DSY_REVERB2_MAX_SIZE (262144)
 
+namespace daisysp {
 /**Delay line for internal reverb use
  */
 typedef struct {
@@ -37,13 +38,16 @@ class Reverb2 {
      Process function will be called. Returns 0 if all good, or 1 if it runs out
      of delay times exceed maximum allowed.
   */
-  int Init(float sample_rate);
+  int Init(float sample_rate, float *buf);
 
   /** Process the input through the reverb, and updates values of out1, and out2
    * with the new processed signal.
    */
   int Process(const float &in1, const float &in2, float *out1, float *out2);
 
+  void Process(const float *const *in, float **out, size_t num);
+
+  void SetWet(float wet);
   /** controls the reverb time. reverb tail becomes infinite when set to 1.0
       \param fb - sets reverb time. range: 0.0 to 1.0
   */
@@ -62,8 +66,11 @@ class Reverb2 {
   float damp_fact_;
   float prv_lpfreq_;
   int init_done_;
+  float *aux_;
+  float wet_;
+  float dry_;
   Reverb2Dl delay_lines_[8];
-  float aux_[DSY_Reverb2_MAX_SIZE];
 };
 
+}  // namespace daisysp
 #endif
