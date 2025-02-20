@@ -183,6 +183,54 @@ int main(void) {
   d25_.Init(D25, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
 
   // setup D11 and D12 for I2c
+  GPIO button;
+  GPIO buttons[3];
+  buttons[0].Init(D22, GPIO::Mode::OUTPUT);
+  buttons[1].Init(D23, GPIO::Mode::OUTPUT);
+  buttons[2].Init(D24, GPIO::Mode::OUTPUT);
+  button.Init(D25, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  GPIO leds[8];
+  leds[0].Init(D30, GPIO::Mode::OUTPUT);
+  leds[1].Init(D0, GPIO::Mode::OUTPUT);
+  leds[2].Init(D7, GPIO::Mode::OUTPUT);
+  leds[3].Init(D8, GPIO::Mode::OUTPUT);
+  leds[4].Init(D10, GPIO::Mode::OUTPUT);
+  leds[5].Init(D13, GPIO::Mode::OUTPUT);
+  leds[6].Init(D14, GPIO::Mode::OUTPUT);
+  leds[7].Init(D9, GPIO::Mode::OUTPUT);
+  // create array of 3 buttons
+  bool buttonOn[8] = {false};
+  uint8_t x = 0;
+  while (true) {
+    buttons[0].Write(x & 1);
+    buttons[1].Write(x & 2);
+    buttons[2].Write(x & 4);
+    if (buttonOn[x] != button.Read()) {
+      daisyseed.PrintLine("Button %d = %d", x, buttonOn[x]);
+      buttonOn[x] = !buttonOn[x];
+      leds[x].Write(!buttonOn[x]);
+    }
+    System::Delay(1);
+    x++;
+    if (x >= 8) {
+      x = 0;
+    }
+  }
+
+  // // Create an ADC Channel Config object
+  // AdcChannelConfig adc_config[3];
+  // adc_config[0].InitSingle(A0);
+  // adc_config[1].InitSingle(A1);
+  // adc_config[2].InitSingle(A2);
+  // daisyseed.adc.Init(adc_config, 3);
+  // daisyseed.adc.Start();
+
+  // while (true) {
+  //   daisyseed.PrintLine("%2.2f %2.2f %2.2f", daisyseed.adc.GetFloat(0),
+  //                       daisyseed.adc.GetFloat(1),
+  //                       daisyseed.adc.GetFloat(2));
+  //   System::Delay(10);
+  // }
 
   // initialize i2c to communicate
   i2c = I2CHandle();
@@ -223,23 +271,23 @@ int main(void) {
   }
   daisyseed.PrintLine("Done scanning I2C bus");
 
-  PCA9552 pca9552 = PCA9552(0x60, &i2c, row, col);
-
-  // light upt each led one at a time
-  while (true) {
-    for (size_t i = 0; i < 16; i++) {
-      daisyseed.PrintLine("LED %d", i);
-      pca9552.ledSet(i, 1);
-      pca9552.render();
-      System::Delay(500);
-      pca9552.ledSet(i, 0);
-      pca9552.render();
-      System::Delay(500);
-    }
-  }
+  // PCA9552 pca9552 = PCA9552(0x60, &i2c, row, col);
+  // // light upt each led one at a time
+  // while (true) {
+  //   for (size_t i = 0; i < 16; i++) {
+  //     daisyseed.PrintLine("LED %d", i);
+  //     pca9552.ledSet(i, 1);
+  //     pca9552.render();
+  //     System::Delay(500);
+  //     pca9552.ledSet(i, 0);
+  //     pca9552.render();
+  //     System::Delay(500);
+  //   }
+  // }
   // PCA9552(uint8_t deviceAddress, daisy::I2CHandle* i2cHandle,
   //   const std::array<uint8_t, 16>& rowMap,
   //   const std::array<uint8_t, 16>& colMap)
+
   metroPrintTimer.Init(10.0f, 1000);
 
   // print starting
