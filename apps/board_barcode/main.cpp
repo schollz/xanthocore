@@ -1,5 +1,5 @@
 
-#define AUDIO_SAMPLE_RATE 48000  // 32000 or 48000
+#define AUDIO_SAMPLE_RATE 32000  // 32000 or 48000
 #define AUDIO_BLOCK_SIZE 128
 
 // #define INCLUDE_FVERB3
@@ -14,7 +14,6 @@
 #endif
 //
 #include "../../lib/App.h"
-#include "../../lib/PCA9552.h"
 #include "../../lib/barcode/Barcode.h"
 #include "../../lib/reverb2/Reverb2.h"
 #include "../../lib/softcut/Utilities.h"
@@ -57,6 +56,11 @@ float DSY_SDRAM_BSS reverb_buffer[DSY_REVERB2_MAX_SIZE];
 bool button1Pressed = false;
 bool button2Pressed = false;
 bool updateDigitalOrAnalog = false;
+bool buttonOn[8] = {false};
+GPIO leds[8];
+GPIO buttons[3];
+GPIO button;
+
 static void AudioCallback(AudioHandle::InputBuffer in,
                           AudioHandle::OutputBuffer out, size_t size) {
 #ifdef INCLUDE_AUDIO_PROFILING
@@ -65,6 +69,29 @@ static void AudioCallback(AudioHandle::InputBuffer in,
   // audiocallback_sample_num = size / 2;
   loadMeter.OnBlockStart();
 #endif
+
+  if (updateDigitalOrAnalog) {
+    // process the potentiometers
+    float val = daisyseed.adc.GetFloat(0);
+    val = val - 0.088f / (0.969 - 0.088);
+    if (val < 0.02) {
+      val = 0.0;
+    } else if (val > 0.98) {
+      val = 1.0;
+    }
+    knob1Slew.setTarget(val);
+    val = daisyseed.adc.GetFloat(1);
+    if (val < 0.02) {
+      val = 0.0;
+    } else if (val > 0.98) {
+      val = 1.0;
+    }
+    knob2Slew.setTarget(val);
+    app->setMainWet(knob1Slew.update());
+    reverbWet = knob2Slew.update();
+    reverb.SetWet(reverbWet);
+  }
+  updateDigitalOrAnalog = !updateDigitalOrAnalog;
 
   // clear out
   for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
@@ -120,76 +147,69 @@ int main(void) {
   knob1Slew = LinearRamp(AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE / 2, 0.2f);
   knob2Slew = LinearRamp(AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE / 2, 0.2f);
 
-  // setup PCA9552
-  // create a row map  0,0,0,0,1,1,1,1,2,2,2,3,3,3,3
-  // create a col map  0,1,2,3,0,1,2,3,0,1,2,0,1,2,3
-  const std::array<uint8_t, 16> row = {0, 0, 0, 0, 1, 1, 1, 1,
-                                       2, 2, 2, 3, 3, 3, 3};
-  const std::array<uint8_t, 16> col = {0, 1, 2, 3, 0, 1, 2, 3,
-                                       0, 1, 2, 3, 0, 1, 2, 3};
+  // // turn off all GPIO
+  // GPIO d0_;
+  // d0_.Init(D0, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d1_;
+  // d1_.Init(D1, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d2_;
+  // d2_.Init(D2, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d3_;
+  // d3_.Init(D3, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d4_;
+  // d4_.Init(D4, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d5_;
+  // d5_.Init(D5, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d6_;
+  // d6_.Init(D6, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d7_;
+  // d7_.Init(D7, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d8_;
+  // d8_.Init(D8, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d9_;
+  // d9_.Init(D9, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d10_;
+  // d10_.Init(D10, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d11_;
+  // d11_.Init(D11, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d12_;
+  // d12_.Init(D12, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d13_;
+  // d13_.Init(D13, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d14_;
+  // d14_.Init(D14, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d15_;
+  // d15_.Init(D15, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d16_;
+  // d16_.Init(D16, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d17_;
+  // d17_.Init(D17, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d18_;
+  // d18_.Init(D18, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d19_;
+  // d19_.Init(D19, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d20_;
+  // d20_.Init(D20, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d21_;
+  // d21_.Init(D21, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d22_;
+  // d22_.Init(D22, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d23_;
+  // d23_.Init(D23, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d24_;
+  // d24_.Init(D24, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // GPIO d25_;
+  // d25_.Init(D25, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
 
-  // turn off all GPIO
-  GPIO d0_;
-  d0_.Init(D0, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d1_;
-  d1_.Init(D1, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d2_;
-  d2_.Init(D2, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d3_;
-  d3_.Init(D3, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d4_;
-  d4_.Init(D4, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d5_;
-  d5_.Init(D5, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d6_;
-  d6_.Init(D6, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d7_;
-  d7_.Init(D7, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d8_;
-  d8_.Init(D8, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d9_;
-  d9_.Init(D9, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d10_;
-  d10_.Init(D10, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d11_;
-  d11_.Init(D11, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d12_;
-  d12_.Init(D12, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d13_;
-  d13_.Init(D13, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d14_;
-  d14_.Init(D14, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d15_;
-  d15_.Init(D15, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d16_;
-  d16_.Init(D16, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d17_;
-  d17_.Init(D17, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d18_;
-  d18_.Init(D18, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d19_;
-  d19_.Init(D19, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d20_;
-  d20_.Init(D20, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d21_;
-  d21_.Init(D21, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d22_;
-  d22_.Init(D22, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d23_;
-  d23_.Init(D23, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d24_;
-  d24_.Init(D24, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO d25_;
-  d25_.Init(D25, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // // setup D11 and D12 for I2c
 
-  // setup D11 and D12 for I2c
-  GPIO button;
-  GPIO buttons[3];
   buttons[0].Init(D22, GPIO::Mode::OUTPUT);
   buttons[1].Init(D23, GPIO::Mode::OUTPUT);
   buttons[2].Init(D24, GPIO::Mode::OUTPUT);
+  buttons[0].Write(0);
+  buttons[1].Write(0);
+  buttons[2].Write(1);
   button.Init(D25, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  GPIO leds[8];
   leds[0].Init(D30, GPIO::Mode::OUTPUT);
   leds[1].Init(D0, GPIO::Mode::OUTPUT);
   leds[2].Init(D7, GPIO::Mode::OUTPUT);
@@ -198,32 +218,32 @@ int main(void) {
   leds[5].Init(D13, GPIO::Mode::OUTPUT);
   leds[6].Init(D14, GPIO::Mode::OUTPUT);
   leds[7].Init(D9, GPIO::Mode::OUTPUT);
-  // create array of 3 buttons
-  bool buttonOn[8] = {false};
-  uint8_t x = 0;
-  while (true) {
-    buttons[0].Write(x & 1);
-    buttons[1].Write(x & 2);
-    buttons[2].Write(x & 4);
-    if (buttonOn[x] != button.Read()) {
-      daisyseed.PrintLine("Button %d = %d", x, buttonOn[x]);
-      buttonOn[x] = !buttonOn[x];
-      leds[x].Write(!buttonOn[x]);
-    }
-    System::Delay(1);
-    x++;
-    if (x >= 8) {
-      x = 0;
-    }
-  }
+  // // create array of 3 buttons
+  // bool buttonOn[8] = {false};
+  // uint8_t x = 0;
+  // while (true) {
+  //   buttons[0].Write(x & 1);
+  //   buttons[1].Write(x & 2);
+  //   buttons[2].Write(x & 4);
+  //   if (buttonOn[x] != button.Read()) {
+  //     daisyseed.PrintLine("Button %d = %d", x, buttonOn[x]);
+  //     buttonOn[x] = !buttonOn[x];
+  //     leds[x].Write(!buttonOn[x]);
+  //   }
+  //   System::Delay(1);
+  //   x++;
+  //   if (x >= 8) {
+  //     x = 0;
+  //   }
+  // }
 
-  // // Create an ADC Channel Config object
-  // AdcChannelConfig adc_config[3];
-  // adc_config[0].InitSingle(A0);
-  // adc_config[1].InitSingle(A1);
-  // adc_config[2].InitSingle(A2);
-  // daisyseed.adc.Init(adc_config, 3);
-  // daisyseed.adc.Start();
+  // Create an ADC Channel Config object
+  AdcChannelConfig adc_config[3];
+  adc_config[0].InitSingle(A0);
+  adc_config[1].InitSingle(A1);
+  adc_config[2].InitSingle(A2);
+  daisyseed.adc.Init(adc_config, 3);
+  daisyseed.adc.Start();
 
   // while (true) {
   //   daisyseed.PrintLine("%2.2f %2.2f %2.2f", daisyseed.adc.GetFloat(0),
@@ -231,45 +251,6 @@ int main(void) {
   //                       daisyseed.adc.GetFloat(2));
   //   System::Delay(10);
   // }
-
-  // initialize i2c to communicate
-  i2c = I2CHandle();
-  I2CHandle::Config i2c_conf;
-  i2c_conf.periph = I2CHandle::Config::Peripheral::I2C_1;
-  i2c_conf.speed = I2CHandle::Config::Speed::I2C_100KHZ;
-  i2c_conf.mode = I2CHandle::Config::Mode::I2C_MASTER;
-  // https://github.com/electro-smith/libDaisy/blob/master/src/daisy_seed.h#L209-L210
-  i2c_conf.pin_config.scl = Pin(PORTB, 8);
-  i2c_conf.pin_config.sda = Pin(PORTB, 9);
-  i2c.Init(i2c_conf);
-  // do an I2c scan
-  System::Delay(1000);
-  daisyseed.PrintLine("Scanning I2C bus...");
-  for (uint8_t i = 0; i < 128; i++) {
-    // send bytes to address
-    uint8_t dummy = 0;
-    if (i2c.TransmitBlocking(i, &dummy, 1, 100) == I2CHandle::Result::OK) {
-      daisyseed.PrintLine("Found device at 0x%02X", i);
-    }
-    if (i2c.ReceiveBlocking(i, &dummy, 1, 100) == I2CHandle::Result::OK) {
-      daisyseed.PrintLine("Found device at 0x%02X", i);
-    }
-  }
-  daisyseed.PrintLine("Done scanning I2C bus");
-
-  System::Delay(1000);
-  daisyseed.PrintLine("Scanning I2C bus...");
-  for (uint8_t i = 0; i < 128; i++) {
-    // send bytes to address
-    uint8_t dummy = 0;
-    if (i2c.TransmitBlocking(i, &dummy, 1, 100) == I2CHandle::Result::OK) {
-      daisyseed.PrintLine("Found device at 0x%02X", i);
-    }
-    if (i2c.ReceiveBlocking(i, &dummy, 1, 100) == I2CHandle::Result::OK) {
-      daisyseed.PrintLine("Found device at 0x%02X", i);
-    }
-  }
-  daisyseed.PrintLine("Done scanning I2C bus");
 
   // PCA9552 pca9552 = PCA9552(0x60, &i2c, row, col);
   // // light upt each led one at a time
@@ -288,7 +269,7 @@ int main(void) {
   //   const std::array<uint8_t, 16>& rowMap,
   //   const std::array<uint8_t, 16>& colMap)
 
-  metroPrintTimer.Init(10.0f, 1000);
+  metroPrintTimer.Init(2.0f, 1000);
 
   // print starting
   daisyseed.PrintLine("Loading barcode...");
@@ -335,11 +316,14 @@ int main(void) {
       daisyseed.PrintLine("Invalid sample rate");
     }
   }
+
   hw.SetAudioBlockSize(AUDIO_BLOCK_SIZE);
   hw.StartAudio(AudioCallback);
   daisyseed.PrintLine("Audio started");
 
   loadMeter.Init(hw.AudioSampleRate(), hw.AudioBlockSize());
+  size_t x = 0;
+  bool firstButtonSet = true;
   while (1) {
     if (metroPrintTimer.Process()) {
 #ifdef INCLUDE_AUDIO_PROFILING
@@ -351,13 +335,32 @@ int main(void) {
                           FLT_VAR3(loadMeter.GetMaxCpuLoad() * 100.0f));
 #endif
       // print position of voice 0
-      daisyseed.PrintLine("Position: %f",
-                          barcode->getVoices().getSavedPosition(0));
+      daisyseed.PrintLine("Position: %f %2.3f",
+                          barcode->getVoices().getSavedPosition(0),
+                          daisyseed.adc.GetFloat(0));
     }
 
-    if (do_update_leds) {
-      do_update_leds = false;
+    // check buttons
+    buttons[0].Write(x & 1);
+    buttons[1].Write(x & 2);
+    buttons[2].Write(x & 4);
+    // System::Delay(5);
+    if (buttonOn[x] != button.Read()) {
+      // daisyseed.PrintLine("Button %d = %d", x, buttonOn[x]);
+      buttonOn[x] = !buttonOn[x];
+      leds[x].Write(!buttonOn[x]);
+      if (!firstButtonSet) {
+        if (x == 0) {
+          daisyseed.PrintLine("Button %d = %d", x, buttonOn[x]);
+          barcode->ToggleRecording(!buttonOn[x]);
+        }
+      }
     }
-    System::Delay(10);
+    x++;
+    if (x >= 8) {
+      x = 0;
+      firstButtonSet = false;
+    }
+    System::Delay(1);
   }
 }
