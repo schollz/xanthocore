@@ -4,7 +4,7 @@
 #include "Utilities.h"
 #include "Voice.h"
 
-#define NUM_VOICES 6
+#define NUM_VOICES 7
 
 namespace softcut {
 
