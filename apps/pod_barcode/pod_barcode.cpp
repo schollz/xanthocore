@@ -9,9 +9,11 @@
 //
 #include "../../lib/App.h"
 #include "../../lib/Config.h"
+#include "../../lib/TapeEmu.h"
 #include "../../lib/barcode/Barcode.h"
 #include "../../lib/reverb2/Reverb2.h"
 #include "../../lib/softcut/Utilities.h"
+
 // add namespaces
 using namespace softcut;
 using namespace daisy;
@@ -20,6 +22,7 @@ using namespace daisysp;
 App *app;
 Barcode *barcode;
 Reverb2 reverb;
+TapeEmu tapeEmulator;
 #ifdef INCLUDE_FVERB3
 FVerb3 fverb3;
 #endif
@@ -109,18 +112,9 @@ static void AudioCallback(AudioHandle::InputBuffer in,
 
   app->Process(in, out, CONFIG_AUDIO_BLOCK_SIZE);
 
-  // DC block
-  for (size_t i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
-    out[0][i] = dcblock[0].Process(out[0][i]);
-    out[1][i] = dcblock[1].Process(out[1][i]);
-  }
-
   reverb.Process(out, out, CONFIG_AUDIO_BLOCK_SIZE);
-  // // add tanf to the output
-  // for (size_t i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
-  //   out[0][i] = tanf(out[0][i]) / 2;
-  //   out[1][i] = tanf(out[1][i]) / 2;
-  // }
+
+  tapeEmulator.Process(out, out, CONFIG_AUDIO_BLOCK_SIZE);
 
 #ifdef INCLUDE_FVERB3
   fverb3.compute(out, CONFIG_AUDIO_BLOCK_SIZE);
@@ -137,9 +131,6 @@ int main(void) {
   hw.Init(true);
   daisyseed.StartLog(false);
 
-  for (size_t i = 0; i < 2; i++) {
-    dcblock[i].Init(hw.AudioSampleRate());
-  }
 #ifdef INCLUDE_FVERB3
   fverb3.init(CONFIG_AUDIO_SAMPLE_RATE);
   fverb3.set_input_diffusion_2(80);
@@ -147,7 +138,8 @@ int main(void) {
   fverb3.set_decay(75);
 #endif
 
-  reverb.Init(hw.AudioSampleRate(), reverb_buffer);
+  reverb.Init(CONFIG_AUDIO_SAMPLE_RATE, reverb_buffer);
+  tapeEmulator.Init(CONFIG_AUDIO_SAMPLE_RATE);
 
   // clear tape_linear_buffer
   memset(tape_linear_buffer, 0, sizeof(tape_linear_buffer));

@@ -1,14 +1,19 @@
 # Get the CPU cores
 CORES := $(shell grep -c ^processor /proc/cpuinfo)
 
-board_barcode: APP_NAME=board_barcode
-board_barcode: build_app
-
 pod_barcode: APP_NAME=pod_barcode
 pod_barcode: build_app
 
-board_barcode_upload: APP_NAME=board_barcode UPLOAD=program-dfu
-board_barcode_upload: build_app
+
+board_barcode: APP_NAME=board_barcode
+board_barcode: build_app
+
+
+upload_board_barcode: APP_NAME=board_barcode UPLOAD=program-dfu
+upload_board_barcode: build_app
+
+upload_pod_barcode: APP_NAME=pod_barcode UPLOAD=program-dfu
+upload_pod_barcode: build_app
 
 build_app: lib/DaisySP/core
 	LD_LIBRARY_PATH=$(HOME)/bin/gcc-arm-none-eabi-10-2020-q4-major/arm-none-eabi/lib:$$LD_LIBRARY_PATH \

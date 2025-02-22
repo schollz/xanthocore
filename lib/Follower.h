@@ -5,6 +5,7 @@
 
 class Follower {
  public:
+  Follower(){};
   Follower(float sampleRate)
       : a_(std::exp(-1.0 / (0.001 * sampleRate))),  // Attack time = 1ms
         b_(std::exp(-1.0 / (0.020 * sampleRate))),  // Decay time = 20ms

@@ -5,7 +5,7 @@ USE_DAISYSP_LGPL = 1
 # APP_TYPE=BOOT_QSPI
 APP_TYPE=BOOT_SRAM
 
-CPP_SOURCES = apps/board_barcode/main.cpp \
+CPP_SOURCES = apps/board_barcode/board_barcode.cpp \
 	lib/Config.cpp \
 	lib/Follower.cpp \
 	lib/softcut/FadeCurves.cpp \
