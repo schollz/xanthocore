@@ -90,6 +90,7 @@ static void AudioCallback(AudioHandle::InputBuffer in,
       case 2:
         // do something with the value
         tapeEmulator.SetBias(knobSlew[i].update());
+        tapeEmulator.SetPregain(knobSlew[i].update() * 10.0f + 1.0f);
         break;
     }
   }
