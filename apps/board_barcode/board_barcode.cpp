@@ -14,6 +14,7 @@
 #include "../../lib/App.h"
 #include "../../lib/Config.h"
 #include "../../lib/Follower.h"
+#include "../../lib/TapeEmu.h"
 #include "../../lib/barcode/Barcode.h"
 #include "../../lib/reverb2/Reverb2.h"
 #include "../../lib/softcut/Utilities.h"
@@ -42,9 +43,8 @@ DaisyPod hw;
 DaisySeed daisyseed;
 CpuLoadMeter loadMeter;
 Metro metroPrintTimer;
-LinearRamp knob1Slew;
-LinearRamp knob2Slew;
-DcBlock dcblock[2];
+LinearRamp knobSlew[3];
+TapeEmu tapeEmulator;
 
 float mainWet = 0.5;
 float reverbWet = 0.5;
@@ -71,26 +71,27 @@ static void AudioCallback(AudioHandle::InputBuffer in,
   loadMeter.OnBlockStart();
 #endif
 
-  if (updateDigitalOrAnalog) {
-    // process the potentiometers
-    float val = daisyseed.adc.GetFloat(0);
-    val = val - 0.088f / (0.969 - 0.088);
-    if (val < 0.02) {
+  for (size_t i = 0; i < 3; i++) {
+    float val = daisyseed.adc.GetFloat(i);
+    if (val < 0.1) {
       val = 0.0;
-    } else if (val > 0.98) {
+    } else if (val > 0.94) {
       val = 1.0;
     }
-    knob1Slew.setTarget(val);
-    val = daisyseed.adc.GetFloat(1);
-    if (val < 0.02) {
-      val = 0.0;
-    } else if (val > 0.98) {
-      val = 1.0;
+    knobSlew[i].setTarget(val);
+    switch (i) {
+      case 0:
+        app->setMainWet(knobSlew[i].update());
+        break;
+      case 1:
+        reverbWet = knobSlew[i].update();
+        reverb.SetWet(reverbWet);
+        break;
+      case 2:
+        // do something with the value
+        tapeEmulator.SetBias(knobSlew[i].update());
+        break;
     }
-    knob2Slew.setTarget(val);
-    app->setMainWet(knob1Slew.update());
-    reverbWet = knob2Slew.update();
-    reverb.SetWet(reverbWet);
   }
   updateDigitalOrAnalog = !updateDigitalOrAnalog;
 
@@ -104,18 +105,7 @@ static void AudioCallback(AudioHandle::InputBuffer in,
 
   reverb.Process(out, out, CONFIG_AUDIO_BLOCK_SIZE);
 
-  // add tanf to the output
-  for (size_t i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
-    float follow = follower.process(out[0][0]);
-    out[0][i] = tanhf(out[0][i] + (follow / 2));
-    out[1][i] = tanhf(out[1][i] + (follow / 2));
-  }
-
-  // DC block
-  for (size_t i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
-    out[0][i] = tanhf(dcblock[0].Process(out[0][i]));
-    out[1][i] = tanhf(dcblock[1].Process(out[1][i]));
-  }
+  tapeEmulator.Process(out, CONFIG_AUDIO_BLOCK_SIZE);
 
 #ifdef INCLUDE_FVERB3
   fverb3.compute(out, CONFIG_AUDIO_BLOCK_SIZE);
@@ -130,11 +120,8 @@ int main(void) {
   // hw.Init(false): 74.7% avg, 90.3% max
   // hw.Init(true): 79.9% avg, 96.6% max
   hw.Init(true);
-  daisyseed.StartLog(true);
+  daisyseed.StartLog(false);
 
-  for (size_t i = 0; i < 2; i++) {
-    dcblock[i].Init(hw.AudioSampleRate());
-  }
 #ifdef INCLUDE_FVERB3
   fverb3.init(CONFIG_AUDIO_SAMPLE_RATE);
   fverb3.set_input_diffusion_2(80);
@@ -142,15 +129,16 @@ int main(void) {
   fverb3.set_decay(75);
 #endif
 
-  reverb.Init(hw.AudioSampleRate(), reverb_buffer);
+  reverb.Init(CONFIG_AUDIO_SAMPLE_RATE, reverb_buffer);
+  tapeEmulator.Init(CONFIG_AUDIO_SAMPLE_RATE);
 
   // clear tape_linear_buffer
   memset(tape_linear_buffer, 0, sizeof(tape_linear_buffer));
 
-  knob1Slew =
-      LinearRamp(CONFIG_AUDIO_SAMPLE_RATE / CONFIG_AUDIO_BLOCK_SIZE / 2, 0.2f);
-  knob2Slew =
-      LinearRamp(CONFIG_AUDIO_SAMPLE_RATE / CONFIG_AUDIO_BLOCK_SIZE / 2, 0.2f);
+  for (size_t i = 0; i < 3; i++) {
+    knobSlew[i] =
+        LinearRamp(CONFIG_AUDIO_SAMPLE_RATE / CONFIG_AUDIO_BLOCK_SIZE, 0.2f);
+  }
 
   // // turn off all GPIO
   // GPIO d0_;
@@ -274,7 +262,7 @@ int main(void) {
   //   const std::array<uint8_t, 16>& rowMap,
   //   const std::array<uint8_t, 16>& colMap)
 
-  metroPrintTimer.Init(2.0f, 1000);
+  metroPrintTimer.Init(10.0f, 1000);
 
   // print starting
   daisyseed.PrintLine("Loading barcode...");
@@ -335,7 +323,7 @@ int main(void) {
   hw.StartAudio(AudioCallback);
   daisyseed.PrintLine("Audio started");
 
-  loadMeter.Init(hw.AudioSampleRate(), hw.AudioBlockSize());
+  loadMeter.Init(CONFIG_AUDIO_SAMPLE_RATE, CONFIG_AUDIO_BLOCK_SIZE);
   size_t x = 0;
   bool firstButtonSet = true;
   while (1) {
@@ -349,9 +337,10 @@ int main(void) {
                           FLT_VAR3(loadMeter.GetMaxCpuLoad() * 100.0f));
 #endif
       // print position of voice 0
-      daisyseed.PrintLine("Position: %f %2.3f",
+      daisyseed.PrintLine("Position: %f %2.3f %2.3f %2.3f",
                           barcode->getVoices().getSavedPosition(0),
-                          daisyseed.adc.GetFloat(0));
+                          knobSlew[0].getValue(), knobSlew[1].getValue(),
+                          knobSlew[2].getValue());
     }
 
     // check buttons

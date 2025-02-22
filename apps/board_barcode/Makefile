@@ -7,6 +7,7 @@ APP_TYPE=BOOT_SRAM
 
 CPP_SOURCES = apps/board_barcode/board_barcode.cpp \
 	lib/Config.cpp \
+	lib/TapeEmu.cpp \
 	lib/Follower.cpp \
 	lib/softcut/FadeCurves.cpp \
 	lib/softcut/ReadWriteHead.cpp \
