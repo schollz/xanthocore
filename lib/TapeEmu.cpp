@@ -22,15 +22,15 @@ void TapeEmu::SetPregain(float pregain) { pregain_ = pregain; }
 
 void TapeEmu::Process(float **out, unsigned int numFrames) {
   for (size_t i = 0; i < numFrames; i++) {
-    follow_ = follower.process(out[0][i]);
-
     // pregain
     out[0][i] *= pregain_;
     out[1][i] *= pregain_;
 
+    follow_ = follower.process(out[0][i]);
+
     // dc bias with follower
-    out[0][i] = tanhf(out[0][i] + (follow_ * bias_));
-    out[1][i] = tanhf(out[1][i] + (follow_ * bias_));
+    out[0][i] = tanhf(out[0][i] + (follow_ * bias_ / 2));
+    out[1][i] = tanhf(out[1][i] + (follow_ * bias_ / 2));
 
     // DC blocking
     float in = out[0][i];
