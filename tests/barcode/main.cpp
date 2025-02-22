@@ -13,9 +13,9 @@
 #include "../../lib/reverb2/Reverb2.h"
 
 #define MAX_SIZE (8388608)
-#define AUDIO_SAMPLE_RATE 48000
+#define CONFIG_AUDIO_SAMPLE_RATE 48000
 using namespace softcut;
-unsigned int AUDIO_BLOCK_SIZE = 128;
+unsigned int CONFIG_AUDIO_BLOCK_SIZE = 128;
 
 // audioblock for softcut data
 float tape_linear_buffer[MAX_SIZE * 2];
@@ -41,26 +41,26 @@ int main() {
   // clear tape_linear_buffer
   memset(tape_linear_buffer, 0, sizeof(tape_linear_buffer));
   Barcode barcode;
-  barcode.init(tape_linear_buffer, MAX_SIZE, AUDIO_SAMPLE_RATE,
-               AUDIO_BLOCK_SIZE);
+  barcode.init(tape_linear_buffer, MAX_SIZE, CONFIG_AUDIO_SAMPLE_RATE,
+               CONFIG_AUDIO_BLOCK_SIZE);
 
   Reverb2 reverb;
   reverb.SetFeedback(0.7);
-  reverb.Init(AUDIO_SAMPLE_RATE);
+  reverb.Init(CONFIG_AUDIO_SAMPLE_RATE);
 
   int index = 0;
-  float interleavedBuffer[AUDIO_BLOCK_SIZE * 2];
-  float leftChannelIn[AUDIO_BLOCK_SIZE];
-  float rightChannelIn[AUDIO_BLOCK_SIZE];
-  float leftChannelOut[AUDIO_BLOCK_SIZE];
-  float rightChannelOut[AUDIO_BLOCK_SIZE];
+  float interleavedBuffer[CONFIG_AUDIO_BLOCK_SIZE * 2];
+  float leftChannelIn[CONFIG_AUDIO_BLOCK_SIZE];
+  float rightChannelIn[CONFIG_AUDIO_BLOCK_SIZE];
+  float leftChannelOut[CONFIG_AUDIO_BLOCK_SIZE];
+  float rightChannelOut[CONFIG_AUDIO_BLOCK_SIZE];
   float reverbWet = 0.5;
   float reverbDry = 1.0 - reverbWet;
 
   while (inFile.read(reinterpret_cast<char*>(interleavedBuffer),
                      sizeof(interleavedBuffer))) {
     // deinterleave
-    for (unsigned int i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+    for (unsigned int i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
       leftChannelIn[i] = interleavedBuffer[i * 2];
       rightChannelIn[i] = interleavedBuffer[i * 2 + 1];
       leftChannelOut[i] = 0;
@@ -74,10 +74,10 @@ int main() {
     }
 
     barcode.process(leftChannelIn, rightChannelIn, leftChannelOut,
-                    rightChannelOut, AUDIO_BLOCK_SIZE);
+                    rightChannelOut, CONFIG_AUDIO_BLOCK_SIZE);
 
     // reverb
-    for (unsigned int i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+    for (unsigned int i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
       float outl, outr;
       reverb.Process(leftChannelOut[i], rightChannelOut[i], &outl, &outr);
       leftChannelOut[i] = reverbWet * outl + reverbDry * leftChannelOut[i];
@@ -85,7 +85,7 @@ int main() {
     }
 
     // interleave
-    for (unsigned int i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+    for (unsigned int i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
       interleavedBuffer[i * 2] = (leftChannelOut[i]);
       interleavedBuffer[i * 2 + 1] = (rightChannelOut[i]);
     }

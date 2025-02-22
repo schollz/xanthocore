@@ -1,10 +1,9 @@
 #ifndef SOFTCUT_VOICES_H
 #define SOFTCUT_VOICES_H
 
+#include "../Config.h"
 #include "Utilities.h"
 #include "Voice.h"
-
-#define NUM_VOICES 7
 
 namespace softcut {
 
@@ -22,7 +21,7 @@ class Voices {
   void setLoopStart(size_t voice, float sec);
 
   void setLoopStart(float sec) {
-    for (size_t i = 0; i < NUM_VOICES; i++) {
+    for (size_t i = 0; i < CONFIG_VOICE_NUM; i++) {
       setLoopStart(i, sec);
     }
   }
@@ -41,7 +40,7 @@ class Voices {
   void setFadeTime(size_t voice, float sec) { voices[voice].setFadeTime(sec); }
 
   void setFadeTime(float sec) {
-    for (size_t i = 0; i < NUM_VOICES; i++) {
+    for (size_t i = 0; i < CONFIG_VOICE_NUM; i++) {
       voices[i].setFadeTime(sec);
     }
   }
@@ -61,19 +60,19 @@ class Voices {
   void process(const float *const *in, float **out, unsigned int numFrames);
 
  private:
-  Voice voices[NUM_VOICES];
-  float tapeSliceStart[NUM_VOICES] = {0};
-  float tapeSliceEnd[NUM_VOICES] = {0};
-  float loopStart[NUM_VOICES] = {0};
-  float loopEnd[NUM_VOICES] = {0};
-  float panning[NUM_VOICES] = {0};
-  float panningL[NUM_VOICES] = {0};
-  float panningR[NUM_VOICES] = {0};
-  float levels[NUM_VOICES] = {0};
+  Voice voices[CONFIG_VOICE_NUM];
+  float tapeSliceStart[CONFIG_VOICE_NUM] = {0};
+  float tapeSliceEnd[CONFIG_VOICE_NUM] = {0};
+  float loopStart[CONFIG_VOICE_NUM] = {0};
+  float loopEnd[CONFIG_VOICE_NUM] = {0};
+  float panning[CONFIG_VOICE_NUM] = {0};
+  float panningL[CONFIG_VOICE_NUM] = {0};
+  float panningR[CONFIG_VOICE_NUM] = {0};
+  float levels[CONFIG_VOICE_NUM] = {0};
   float mainWet = 0.5;
   float mainDry = 0.5;
-  float inputBus[NUM_VOICES] = {0};
-  bool playing[NUM_VOICES] = {false};
+  float inputBus[CONFIG_VOICE_NUM] = {0};
+  bool playing[CONFIG_VOICE_NUM] = {false};
 
   float *buf = nullptr;
   unsigned int bufFrames = 0;

@@ -13,7 +13,7 @@ void Voices::init(float *tape, unsigned int numFrames, float sr,
   bufFrames = numFrames;
   sampleRate = sr;
 
-  for (size_t i = 0; i < NUM_VOICES; i++) {
+  for (size_t i = 0; i < CONFIG_VOICE_NUM; i++) {
     loopStart[i] = 0;
     loopEnd[i] = 2;
     panning[i] = 0.1;  // this will be set
@@ -43,9 +43,10 @@ void Voices::init(float *tape, unsigned int numFrames, float sr,
 void Voices::setTape(size_t voice, size_t index) {
   float totalSeconds = (float)bufFrames / (float)sampleRate;
   totalSeconds = totalSeconds - (VOICES_TAPE_BUFFER * 2);
-  tapeSliceStart[voice] =
-      VOICES_TAPE_BUFFER + (float)index / (float)NUM_VOICES * totalSeconds;
-  tapeSliceEnd[voice] = (float)(index + 1) / (float)NUM_VOICES * totalSeconds;
+  tapeSliceStart[voice] = VOICES_TAPE_BUFFER +
+                          (float)index / (float)CONFIG_VOICE_NUM * totalSeconds;
+  tapeSliceEnd[voice] =
+      (float)(index + 1) / (float)CONFIG_VOICE_NUM * totalSeconds;
   setLoopStart(voice, loopStart[voice]);
   setLoopEnd(voice, loopEnd[voice]);
 }
@@ -66,7 +67,7 @@ void Voices::setLoopEnd(size_t voice, float sec) {
 }
 
 void Voices::setLoopEnd(float sec) {
-  for (size_t i = 0; i < NUM_VOICES; i++) {
+  for (size_t i = 0; i < CONFIG_VOICE_NUM; i++) {
     setLoopEnd(i, sec);
   }
 }
@@ -76,7 +77,7 @@ void Voices::cutToPos(size_t voice, float sec) {
 }
 
 void Voices::cutToPos(float sec) {
-  for (size_t i = 0; i < NUM_VOICES; i++) {
+  for (size_t i = 0; i < CONFIG_VOICE_NUM; i++) {
     cutToPos(i, sec);
   }
 }
@@ -112,7 +113,7 @@ void Voices::setPan(size_t voice, float pan) {
 }
 
 void Voices::setLevel(size_t voice, float level) {
-  levels[voice] = fclamp(level, 0.0f, 2.0f) / ((float)NUM_VOICES / 2);
+  levels[voice] = fclamp(level, 0.0f, 2.0f) / ((float)CONFIG_VOICE_NUM / 2);
 }
 
 void Voices::setDB(size_t voice, float db) { setLevel(voice, dbamp(db)); }
@@ -127,7 +128,7 @@ void Voices::setRecLevel(size_t voice, float val) {
 
 void Voices::process(const float *const *in, float **out,
                      unsigned int numFrames) {
-  for (size_t i = 0; i < NUM_VOICES; i++) {
+  for (size_t i = 0; i < CONFIG_VOICE_NUM; i++) {
     if (voices[i].getPlayFlag() == false) {
       continue;
     }

@@ -1,32 +1,18 @@
 
-#define AUDIO_SAMPLE_RATE 32000  // 32000 or 48000
-#define AUDIO_BLOCK_SIZE 128
 
 // #define INCLUDE_FVERB3
-
-#include <malloc.h>
 
 #include "core_cm7.h"
 #include "daisy_pod.h"
 #include "daisy_seed.h"
 #include "daisysp.h"
-uint32_t getTotalHeap() {
-  extern char __heap_start;
-
-  return 0x24080000 - __heap_start;
-}
-
-uint32_t getFreeHeap() {
-  struct mallinfo m = mallinfo();
-
-  return getTotalHeap() - m.uordblks;
-}
 //
 #ifdef INCLUDE_FVERB3
 #include "../../lib/fverb3.h"
 #endif
 //
 #include "../../lib/App.h"
+#include "../../lib/Config.h"
 #include "../../lib/barcode/Barcode.h"
 #include "../../lib/reverb2/Reverb2.h"
 #include "../../lib/softcut/Utilities.h"
@@ -56,7 +42,7 @@ class Follower {
  private:
   float a_, b_, y_;
 };
-Follower follower(AUDIO_SAMPLE_RATE);
+Follower follower(CONFIG_AUDIO_SAMPLE_RATE);
 App *app;
 Barcode *barcode;
 Reverb2 reverb;
@@ -128,30 +114,30 @@ static void AudioCallback(AudioHandle::InputBuffer in,
   updateDigitalOrAnalog = !updateDigitalOrAnalog;
 
   // clear out
-  for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+  for (size_t i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
     out[0][i] = 0;
     out[1][i] = 0;
   }
 
-  app->Process(in, out, AUDIO_BLOCK_SIZE);
+  app->Process(in, out, CONFIG_AUDIO_BLOCK_SIZE);
 
-  reverb.Process(out, out, AUDIO_BLOCK_SIZE);
+  reverb.Process(out, out, CONFIG_AUDIO_BLOCK_SIZE);
 
   // add tanf to the output
-  for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+  for (size_t i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
     float follow = follower.process(out[0][0]);
     out[0][i] = tanhf(out[0][i] + (follow / 2));
     out[1][i] = tanhf(out[1][i] + (follow / 2));
   }
 
   // DC block
-  for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+  for (size_t i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
     out[0][i] = tanhf(dcblock[0].Process(out[0][i]));
     out[1][i] = tanhf(dcblock[1].Process(out[1][i]));
   }
 
 #ifdef INCLUDE_FVERB3
-  fverb3.compute(out, AUDIO_BLOCK_SIZE);
+  fverb3.compute(out, CONFIG_AUDIO_BLOCK_SIZE);
 #endif
 
 #ifdef INCLUDE_AUDIO_PROFILING
@@ -169,7 +155,7 @@ int main(void) {
     dcblock[i].Init(hw.AudioSampleRate());
   }
 #ifdef INCLUDE_FVERB3
-  fverb3.init(AUDIO_SAMPLE_RATE);
+  fverb3.init(CONFIG_AUDIO_SAMPLE_RATE);
   fverb3.set_input_diffusion_2(80);
   fverb3.set_tail_density(80);
   fverb3.set_decay(75);
@@ -180,8 +166,10 @@ int main(void) {
   // clear tape_linear_buffer
   memset(tape_linear_buffer, 0, sizeof(tape_linear_buffer));
 
-  knob1Slew = LinearRamp(AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE / 2, 0.2f);
-  knob2Slew = LinearRamp(AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE / 2, 0.2f);
+  knob1Slew =
+      LinearRamp(CONFIG_AUDIO_SAMPLE_RATE / CONFIG_AUDIO_BLOCK_SIZE / 2, 0.2f);
+  knob2Slew =
+      LinearRamp(CONFIG_AUDIO_SAMPLE_RATE / CONFIG_AUDIO_BLOCK_SIZE / 2, 0.2f);
 
   // // turn off all GPIO
   // GPIO d0_;
@@ -311,7 +299,8 @@ int main(void) {
   daisyseed.PrintLine("Loading barcode...");
   app = new Barcode();
   barcode = static_cast<Barcode *>(app);
-  app->Init(tape_linear_buffer, MAX_SIZE, AUDIO_SAMPLE_RATE, AUDIO_BLOCK_SIZE);
+  app->Init(tape_linear_buffer, MAX_SIZE, CONFIG_AUDIO_SAMPLE_RATE,
+            CONFIG_AUDIO_BLOCK_SIZE);
   app->registerCallback(
       static_cast<int>(Barcode::CallbackType::ON_RECORD_START),
       []() { daisyseed.PrintLine("Recording started"); });
@@ -347,10 +336,10 @@ int main(void) {
 
   daisyseed.PrintLine("Starting audio...");
   SaiHandle::Config sai_config;
-  if (AUDIO_SAMPLE_RATE == 32000) {
+  if (CONFIG_AUDIO_SAMPLE_RATE == 32000) {
     sai_config.sr = SaiHandle::Config::SampleRate::SAI_32KHZ;
     hw.SetAudioSampleRate(sai_config.sr);
-  } else if (AUDIO_SAMPLE_RATE == 48000) {
+  } else if (CONFIG_AUDIO_SAMPLE_RATE == 48000) {
     sai_config.sr = SaiHandle::Config::SampleRate::SAI_48KHZ;
     hw.SetAudioSampleRate(sai_config.sr);
   } else {
@@ -361,7 +350,7 @@ int main(void) {
     }
   }
 
-  hw.SetAudioBlockSize(AUDIO_BLOCK_SIZE);
+  hw.SetAudioBlockSize(CONFIG_AUDIO_BLOCK_SIZE);
   hw.StartAudio(AudioCallback);
   daisyseed.PrintLine("Audio started");
 
@@ -378,13 +367,10 @@ int main(void) {
                           FLT_VAR3(loadMeter.GetAvgCpuLoad() * 100.0f),
                           FLT_VAR3(loadMeter.GetMaxCpuLoad() * 100.0f));
 #endif
-      uint32_t total_heap = getTotalHeap();
-      uint32_t used_heap = total_heap - getFreeHeap();
       // print position of voice 0
       daisyseed.PrintLine("Position: %f %2.3f",
                           barcode->getVoices().getSavedPosition(0),
-                          daisyseed.adc.GetFloat(0),
-                          (float)(used_heap) / (float)(total_heap) * 100.0);
+                          daisyseed.adc.GetFloat(0));
     }
 
     // check buttons

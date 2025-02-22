@@ -68,7 +68,7 @@ class Barcode : public App {
   int xfadeSamplesWait = 0;
   int xfadeSamples = 128 * 10;
   float xfadeSeconds = 0.1;
-  Oscillator2 osc[NUM_VOICES][NUM_OSCILLATORS];
+  Oscillator2 osc[CONFIG_VOICE_NUM][NUM_OSCILLATORS];
   // {0.125,0.25,0.5,1,2,4}
   // 0.6    0.6  1   1 0.1 0.05
   float rates[7] = {1, 0.125, 0.25, 0.5, 2, 1.5, 4};

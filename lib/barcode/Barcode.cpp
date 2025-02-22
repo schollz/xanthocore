@@ -11,7 +11,7 @@ void Barcode::Init(float *tape, unsigned int numFrames, float sr,
 
   voices.init(tape, numFrames, sr, audioblockSize);
   // make all voices uses the same tape
-  for (size_t i = 0; i < NUM_VOICES; i++) {
+  for (size_t i = 0; i < CONFIG_VOICE_NUM; i++) {
     voices.setTape(i, 0);
     voices.setPlayFlag(i, true);
     voices.setLoopFlag(i, true);
@@ -34,7 +34,7 @@ void Barcode::Init(float *tape, unsigned int numFrames, float sr,
 
   // initialize oscillators to random lfos with periods between 5 and 40
   // seconds
-  for (size_t i = 0; i < NUM_VOICES; i++) {
+  for (size_t i = 0; i < CONFIG_VOICE_NUM; i++) {
     for (size_t j = 0; j < NUM_OSCILLATORS; j++) {
       osc[i][j].Init(sr / audioblockSize);
       float randomPeriod = 5 + static_cast<float>(rand()) / RAND_MAX * 35;
@@ -73,7 +73,7 @@ void Barcode::TogglePlaying(bool on) {
 void Barcode::Process(const float *const *in, float **out,
                       unsigned int numFrames) {
   if (playing) {
-    for (size_t i = 0; i < NUM_VOICES; i++) {
+    for (size_t i = 0; i < CONFIG_VOICE_NUM; i++) {
       for (size_t j = 0; j < NUM_OSCILLATORS; j++) {
         osc[i][j].Process();
       }
@@ -119,7 +119,7 @@ void Barcode::Process(const float *const *in, float **out,
         voices.setLoopEnd(recordingStop);
         if (!playing) {
           // set all voices to random positions
-          for (size_t i = 0; i < NUM_VOICES; i++) {
+          for (size_t i = 0; i < CONFIG_VOICE_NUM; i++) {
             voices.cutToPos(
                 i, static_cast<float>(rand()) / RAND_MAX * recordingStop);
           }

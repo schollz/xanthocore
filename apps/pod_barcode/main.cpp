@@ -1,6 +1,6 @@
 
-#define AUDIO_SAMPLE_RATE 48000  // 32000 or 48000
-#define AUDIO_BLOCK_SIZE 128
+#define CONFIG_AUDIO_SAMPLE_RATE 48000  // 32000 or 48000
+#define CONFIG_AUDIO_BLOCK_SIZE 128
 
 // #define INCLUDE_FVERB3
 
@@ -106,28 +106,28 @@ static void AudioCallback(AudioHandle::InputBuffer in,
   updateDigitalOrAnalog = !updateDigitalOrAnalog;
 
   // clear out
-  for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+  for (size_t i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
     out[0][i] = 0;
     out[1][i] = 0;
   }
 
-  app->Process(in, out, AUDIO_BLOCK_SIZE);
+  app->Process(in, out, CONFIG_AUDIO_BLOCK_SIZE);
 
   // DC block
-  for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+  for (size_t i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
     out[0][i] = dcblock[0].Process(out[0][i]);
     out[1][i] = dcblock[1].Process(out[1][i]);
   }
 
-  reverb.Process(out, out, AUDIO_BLOCK_SIZE);
+  reverb.Process(out, out, CONFIG_AUDIO_BLOCK_SIZE);
   // // add tanf to the output
-  // for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+  // for (size_t i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
   //   out[0][i] = tanf(out[0][i]) / 2;
   //   out[1][i] = tanf(out[1][i]) / 2;
   // }
 
 #ifdef INCLUDE_FVERB3
-  fverb3.compute(out, AUDIO_BLOCK_SIZE);
+  fverb3.compute(out, CONFIG_AUDIO_BLOCK_SIZE);
 #endif
 
 #ifdef INCLUDE_AUDIO_PROFILING
@@ -145,7 +145,7 @@ int main(void) {
     dcblock[i].Init(hw.AudioSampleRate());
   }
 #ifdef INCLUDE_FVERB3
-  fverb3.init(AUDIO_SAMPLE_RATE);
+  fverb3.init(CONFIG_AUDIO_SAMPLE_RATE);
   fverb3.set_input_diffusion_2(80);
   fverb3.set_tail_density(80);
   fverb3.set_decay(75);
@@ -156,8 +156,10 @@ int main(void) {
   // clear tape_linear_buffer
   memset(tape_linear_buffer, 0, sizeof(tape_linear_buffer));
 
-  knob1Slew = LinearRamp(AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE / 2, 0.2f);
-  knob2Slew = LinearRamp(AUDIO_SAMPLE_RATE / AUDIO_BLOCK_SIZE / 2, 0.2f);
+  knob1Slew =
+      LinearRamp(CONFIG_AUDIO_SAMPLE_RATE / CONFIG_AUDIO_BLOCK_SIZE / 2, 0.2f);
+  knob2Slew =
+      LinearRamp(CONFIG_AUDIO_SAMPLE_RATE / CONFIG_AUDIO_BLOCK_SIZE / 2, 0.2f);
 
   metroPrintTimer.Init(10.0f, 1000);
 
@@ -165,7 +167,8 @@ int main(void) {
   daisyseed.PrintLine("Loading barcode...");
   app = new Barcode();
   barcode = static_cast<Barcode *>(app);
-  app->Init(tape_linear_buffer, MAX_SIZE, AUDIO_SAMPLE_RATE, AUDIO_BLOCK_SIZE);
+  app->Init(tape_linear_buffer, MAX_SIZE, CONFIG_AUDIO_SAMPLE_RATE,
+            CONFIG_AUDIO_BLOCK_SIZE);
   app->registerCallback(
       static_cast<int>(Barcode::CallbackType::ON_RECORD_START),
       []() { daisyseed.PrintLine("Recording started"); });
@@ -197,10 +200,10 @@ int main(void) {
 
   daisyseed.PrintLine("Starting audio...");
   SaiHandle::Config sai_config;
-  if (AUDIO_SAMPLE_RATE == 32000) {
+  if (CONFIG_AUDIO_SAMPLE_RATE == 32000) {
     sai_config.sr = SaiHandle::Config::SampleRate::SAI_32KHZ;
     hw.SetAudioSampleRate(sai_config.sr);
-  } else if (AUDIO_SAMPLE_RATE == 48000) {
+  } else if (CONFIG_AUDIO_SAMPLE_RATE == 48000) {
     sai_config.sr = SaiHandle::Config::SampleRate::SAI_48KHZ;
     hw.SetAudioSampleRate(sai_config.sr);
   } else {
@@ -210,7 +213,7 @@ int main(void) {
       daisyseed.PrintLine("Invalid sample rate");
     }
   }
-  hw.SetAudioBlockSize(AUDIO_BLOCK_SIZE);
+  hw.SetAudioBlockSize(CONFIG_AUDIO_BLOCK_SIZE);
   hw.StartAudio(AudioCallback);
   hw.StartAdc();
   daisyseed.PrintLine("Audio started");

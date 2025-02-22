@@ -13,11 +13,11 @@
 #include "../../lib/softcut/Voice.h"
 
 #define MAX_SIZE (8388608)
-#define AUDIO_SAMPLE_RATE 48000
+#define CONFIG_AUDIO_SAMPLE_RATE 48000
 using namespace softcut;
-unsigned int AUDIO_BLOCK_SIZE = 128;
-#define NUM_VOICES 2
-Voice voices[NUM_VOICES];
+unsigned int CONFIG_AUDIO_BLOCK_SIZE = 128;
+#define CONFIG_VOICE_NUM 2
+Voice voices[CONFIG_VOICE_NUM];
 Barcode barcode;
 
 // audioblock for softcut data
@@ -50,10 +50,10 @@ int main() {
   // clear tape_linear_buffer
   memset(tape_linear_buffer, 0, sizeof(tape_linear_buffer));
   // Initialize voices
-  for (int i = 0; i < NUM_VOICES; i++) {
+  for (int i = 0; i < CONFIG_VOICE_NUM; i++) {
     voices[i].reset();
     voices[i].setBuffer(tape_linear_buffer, MAX_SIZE);
-    voices[i].setSampleRate(AUDIO_SAMPLE_RATE);
+    voices[i].setSampleRate(CONFIG_AUDIO_SAMPLE_RATE);
     voices[i].setRate(1.0);
     voices[i].setLoopStart(1.0 + i * 10);
     voices[i].setLoopEnd(3.0 + i * 10);
@@ -73,14 +73,14 @@ int main() {
   barcode.init(voices);
 
   int index = 0;
-  float interleavedBuffer[AUDIO_BLOCK_SIZE * 2];
-  float leftChannel[AUDIO_BLOCK_SIZE];
-  float rightChannel[AUDIO_BLOCK_SIZE];
+  float interleavedBuffer[CONFIG_AUDIO_BLOCK_SIZE * 2];
+  float leftChannel[CONFIG_AUDIO_BLOCK_SIZE];
+  float rightChannel[CONFIG_AUDIO_BLOCK_SIZE];
 
   while (inFile.read(reinterpret_cast<char*>(interleavedBuffer),
                      sizeof(interleavedBuffer))) {
     // deinterleave
-    for (unsigned int i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+    for (unsigned int i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
       leftChannel[i] = interleavedBuffer[i * 2];
       rightChannel[i] = interleavedBuffer[i * 2 + 1];
       index++;
@@ -94,10 +94,10 @@ int main() {
       }
     }
 
-    processBlock(leftChannel, rightChannel, AUDIO_BLOCK_SIZE);
+    processBlock(leftChannel, rightChannel, CONFIG_AUDIO_BLOCK_SIZE);
 
     // interleave
-    for (unsigned int i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+    for (unsigned int i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
       interleavedBuffer[i * 2] =
           (leftChannel[i] + interleavedBuffer[i * 2]) / 2;
       interleavedBuffer[i * 2 + 1] =
