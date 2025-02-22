@@ -13,6 +13,7 @@
 //
 #include "../../lib/App.h"
 #include "../../lib/Config.h"
+#include "../../lib/Follower.h"
 #include "../../lib/barcode/Barcode.h"
 #include "../../lib/reverb2/Reverb2.h"
 #include "../../lib/softcut/Utilities.h"
@@ -22,26 +23,6 @@ using namespace daisy;
 using namespace daisysp;
 using namespace daisy::seed;
 
-class Follower {
- public:
-  Follower(float sampleRate)
-      : a_(std::exp(-1.0 / (0.001 * sampleRate))),  // Attack time = 1ms
-        b_(std::exp(-1.0 / (0.020 * sampleRate))),  // Decay time = 20ms
-        y_(0) {}
-
-  float process(float x) {
-    const auto abs_x = std::abs(x);
-    if (abs_x > y_) {
-      y_ = a_ * y_ + (1 - a_) * abs_x;
-    } else {
-      y_ = b_ * y_ + (1 - b_) * abs_x;
-    }
-    return y_;
-  }
-
- private:
-  float a_, b_, y_;
-};
 Follower follower(CONFIG_AUDIO_SAMPLE_RATE);
 App *app;
 Barcode *barcode;

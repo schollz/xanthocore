@@ -1,9 +1,4 @@
 
-#define CONFIG_AUDIO_SAMPLE_RATE 48000  // 32000 or 48000
-#define CONFIG_AUDIO_BLOCK_SIZE 128
-
-// #define INCLUDE_FVERB3
-
 #include "core_cm7.h"
 #include "daisy_pod.h"
 #include "daisysp.h"
@@ -13,6 +8,7 @@
 #endif
 //
 #include "../../lib/App.h"
+#include "../../lib/Config.h"
 #include "../../lib/barcode/Barcode.h"
 #include "../../lib/reverb2/Reverb2.h"
 #include "../../lib/softcut/Utilities.h"

@@ -1,0 +1,29 @@
+# wscript
+top = "."
+out = "build"
+
+
+def options(opt):
+    opt.load("compiler_cxx")
+
+
+def configure(conf):
+    conf.load("compiler_cxx")
+
+
+def build(bld):
+    # Source files
+    follower_src = [
+        "../../lib/Follower.cpp",
+    ]
+
+    # Compile the library
+    bld.objects(
+        source=follower_src,
+        includes=[],
+        target="follower",
+        cxxflags="-O2 -Wall",
+    )
+
+    # Compile main program
+    bld.program(source="main.cpp", target="main", use="follower", cxxflags="-O2 -Wall")
