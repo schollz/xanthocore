@@ -4,10 +4,23 @@
 
 // #define INCLUDE_FVERB3
 
+#include <malloc.h>
+
 #include "core_cm7.h"
 #include "daisy_pod.h"
 #include "daisy_seed.h"
 #include "daisysp.h"
+uint32_t getTotalHeap() {
+  extern char __heap_start;
+
+  return 0x24080000 - __heap_start;
+}
+
+uint32_t getFreeHeap() {
+  struct mallinfo m = mallinfo();
+
+  return getTotalHeap() - m.uordblks;
+}
 //
 #ifdef INCLUDE_FVERB3
 #include "../../lib/fverb3.h"
@@ -23,6 +36,27 @@ using namespace daisy;
 using namespace daisysp;
 using namespace daisy::seed;
 
+class Follower {
+ public:
+  Follower(float sampleRate)
+      : a_(std::exp(-1.0 / (0.001 * sampleRate))),  // Attack time = 1ms
+        b_(std::exp(-1.0 / (0.020 * sampleRate))),  // Decay time = 20ms
+        y_(0) {}
+
+  float process(float x) {
+    const auto abs_x = std::abs(x);
+    if (abs_x > y_) {
+      y_ = a_ * y_ + (1 - a_) * abs_x;
+    } else {
+      y_ = b_ * y_ + (1 - b_) * abs_x;
+    }
+    return y_;
+  }
+
+ private:
+  float a_, b_, y_;
+};
+Follower follower(AUDIO_SAMPLE_RATE);
 App *app;
 Barcode *barcode;
 Reverb2 reverb;
@@ -101,18 +135,20 @@ static void AudioCallback(AudioHandle::InputBuffer in,
 
   app->Process(in, out, AUDIO_BLOCK_SIZE);
 
-  // DC block
+  reverb.Process(out, out, AUDIO_BLOCK_SIZE);
+
+  // add tanf to the output
   for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
-    out[0][i] = dcblock[0].Process(out[0][i]);
-    out[1][i] = dcblock[1].Process(out[1][i]);
+    float follow = follower.process(out[0][0]);
+    out[0][i] = tanhf(out[0][i] + (follow / 2));
+    out[1][i] = tanhf(out[1][i] + (follow / 2));
   }
 
-  reverb.Process(out, out, AUDIO_BLOCK_SIZE);
-  // // add tanf to the output
-  // for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
-  //   out[0][i] = tanf(out[0][i]) / 2;
-  //   out[1][i] = tanf(out[1][i]) / 2;
-  // }
+  // DC block
+  for (size_t i = 0; i < AUDIO_BLOCK_SIZE; i++) {
+    out[0][i] = tanhf(dcblock[0].Process(out[0][i]));
+    out[1][i] = tanhf(dcblock[1].Process(out[1][i]));
+  }
 
 #ifdef INCLUDE_FVERB3
   fverb3.compute(out, AUDIO_BLOCK_SIZE);
@@ -283,10 +319,18 @@ int main(void) {
                         []() {
                           daisyseed.PrintLine("Recording stopped");
                           do_update_leds = true;
+                          // turn off all leds
+                          for (size_t i = 0; i < 8; i++) {
+                            leds[i].Write(0);
+                          }
                         });
   app->registerCallback(
       static_cast<int>(Barcode::CallbackType::ON_RECORD_START), []() {
         daisyseed.PrintLine("Recording");
+        // turn on all leds
+        for (size_t i = 0; i < 8; i++) {
+          leds[i].Write(1);
+        }
         do_update_leds = true;
       });
   app->registerCallback(static_cast<int>(Barcode::CallbackType::ON_PLAY_START),
@@ -334,10 +378,13 @@ int main(void) {
                           FLT_VAR3(loadMeter.GetAvgCpuLoad() * 100.0f),
                           FLT_VAR3(loadMeter.GetMaxCpuLoad() * 100.0f));
 #endif
+      uint32_t total_heap = getTotalHeap();
+      uint32_t used_heap = total_heap - getFreeHeap();
       // print position of voice 0
       daisyseed.PrintLine("Position: %f %2.3f",
                           barcode->getVoices().getSavedPosition(0),
-                          daisyseed.adc.GetFloat(0));
+                          daisyseed.adc.GetFloat(0),
+                          (float)(used_heap) / (float)(total_heap) * 100.0);
     }
 
     // check buttons
@@ -350,9 +397,9 @@ int main(void) {
       buttonOn[x] = !buttonOn[x];
       leds[x].Write(!buttonOn[x]);
       if (!firstButtonSet) {
-        if (x == 0) {
+        if (!buttonOn[x]) {
           daisyseed.PrintLine("Button %d = %d", x, buttonOn[x]);
-          barcode->ToggleRecording(!buttonOn[x]);
+          barcode->ToggleRecording();
         }
       }
     }

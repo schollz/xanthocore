@@ -61,6 +61,8 @@ void Barcode::ToggleRecording(bool on) {
   setRecording(on);
 }
 
+void Barcode::ToggleRecording() { ToggleRecording(!recording); }
+
 void Barcode::TogglePlaying(bool on) {
   if (!on && playing) {
     voices.setLevel(0, 0.0);
@@ -77,7 +79,7 @@ void Barcode::Process(const float *const *in, float **out,
       }
       voices.setPan(i, osc[i][LFO_PAN].Value());
       voices.setDB(i, dbs[i] + linlin(osc[i][LFO_AMP].Value(), -1.0f, 1.0f,
-                                      -12.0, 0.0f));
+                                      -12.0, 12.0f));
       bool forward = osc[i][LFO_DIRECTION].Value() > 0;
       if (forward) {
         voices.setRate(i, rates[i]);

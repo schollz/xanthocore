@@ -41,6 +41,7 @@ class Barcode : public App {
   void setMainWet(float val) { voices.setMainWet(val); }
 
   void ToggleRecording(bool on);
+  void ToggleRecording();
   void TogglePlaying(bool on);
 
  private:
@@ -68,8 +69,10 @@ class Barcode : public App {
   int xfadeSamples = 128 * 10;
   float xfadeSeconds = 0.1;
   Oscillator2 osc[NUM_VOICES][NUM_OSCILLATORS];
-  float rates[9] = {1.0, 0.5, 1.5, 0.25, 1.0, 2.0, 2.5, 3.0, 0.125};
-  float dbs[9] = {6, 12, 0, 12, 21, -3, 8, -5, -12};
+  // {0.125,0.25,0.5,1,2,4}
+  // 0.6    0.6  1   1 0.1 0.05
+  float rates[7] = {1, 0.125, 0.25, 0.5, 2, 1.5, 4};
+  float dbs[7] = {0, -5, -5, 0, -12, -16, -24};
 };
 
 #endif
