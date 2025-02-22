@@ -338,10 +338,11 @@ int main(void) {
                           FLT_VAR3(loadMeter.GetMaxCpuLoad() * 100.0f));
 #endif
       // print position of voice 0
-      daisyseed.PrintLine("Position: %f %2.3f %2.3f %2.3f",
+      daisyseed.PrintLine("Position: %f %2.3f %2.3f %2.3f, %2.3f",
                           barcode->getVoices().getSavedPosition(0),
                           knobSlew[0].getValue(), knobSlew[1].getValue(),
-                          knobSlew[2].getValue());
+                          knobSlew[2].getValue(),
+                          tapeEmulator.getFollowerValue());
     }
 
     // check buttons
