@@ -141,6 +141,14 @@ int main(void) {
         LinearRamp(CONFIG_AUDIO_SAMPLE_RATE / CONFIG_AUDIO_BLOCK_SIZE, 0.2f);
   }
 
+  // initialize DAC
+  DacHandle::Config cfg;
+  cfg.bitdepth = DacHandle::BitDepth::BITS_12;
+  cfg.buff_state = DacHandle::BufferState::DISABLED;
+  cfg.mode = DacHandle::Mode::POLLING;
+  cfg.chn = DacHandle::Channel::ONE;
+  daisyseed.dac.Init(cfg);
+
   // // turn off all GPIO
   // GPIO d0_;
   // d0_.Init(D0, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
@@ -343,6 +351,8 @@ int main(void) {
                           knobSlew[0].getValue(), knobSlew[1].getValue(),
                           knobSlew[2].getValue(),
                           tapeEmulator.getFollowerValue());
+      daisyseed.dac.WriteValue(DacHandle::Channel::ONE,
+                               4095 * knobSlew[0].getValue());
     }
 
     // check buttons

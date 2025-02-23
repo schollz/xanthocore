@@ -19,13 +19,11 @@ class Voices {
   void setLevel(size_t voice, float level);
   void setPan(size_t voice, float pan);
   void setLoopStart(size_t voice, float sec);
-
   void setLoopStart(float sec) {
     for (size_t i = 0; i < CONFIG_VOICE_NUM; i++) {
       setLoopStart(i, sec);
     }
   }
-
   void setLoopEnd(size_t voice, float sec);
   void setLoopEnd(float sec);
   void setLoopFlag(size_t voice, bool val);
@@ -36,12 +34,15 @@ class Voices {
   void setRecLevel(size_t voice, float val);
   void cutToPos(size_t voice, float sec);
   void cutToPos(float sec);
-
   void setFadeTime(size_t voice, float sec) { voices[voice].setFadeTime(sec); }
-
   void setFadeTime(float sec) {
     for (size_t i = 0; i < CONFIG_VOICE_NUM; i++) {
       voices[i].setFadeTime(sec);
+    }
+  }
+  void setRecOffset(float d) {
+    for (size_t i = 0; i < CONFIG_VOICE_NUM; i++) {
+      voices[i].setRecOffset(d);
     }
   }
 

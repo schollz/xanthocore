@@ -158,10 +158,18 @@ void ReadWriteHead::cutToPhase(phase_t pos) {
   if (recOnceHead == newActive) {
     recOnceHead = -1;
     recOnceDone = true;
+    std::cerr << "rec once done" << std::endl;
   }
   if (recOnceFlag) {
     recOnceFlag = false;
     recOnceHead = newActive;
+    std::cerr << "rec once head set to " << newActive << std::endl;
+    // print out positoins of the head
+    std::cerr << "head 0 pos: " << head[0].phase() << std::endl;
+    std::cerr << "head 1 pos: " << head[1].phase() << std::endl;
+    // loop end points
+    std::cerr << "loop start: " << start << std::endl;
+    std::cerr << "loop end: " << end << std::endl;
   }
 
   head[newActive].setState(State::FadeIn);
