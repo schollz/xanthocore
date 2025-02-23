@@ -57,6 +57,7 @@ class Voices {
     mainDry = 1.0 - val;
   }
   float getSavedPosition(size_t voice);
+  bool isPlaying(size_t voice) { return voices[voice].getPlayFlag(); }
 
   void process(const float *const *in, float **out, unsigned int numFrames);
 

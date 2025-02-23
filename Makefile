@@ -1,6 +1,13 @@
 # Get the CPU cores
 CORES := $(shell grep -c ^processor /proc/cpuinfo)
 
+board_acrostic:
+	LD_LIBRARY_PATH=$(HOME)/bin/gcc-arm-none-eabi-10-2020-q4-major/arm-none-eabi/lib:$$LD_LIBRARY_PATH \
+	PATH=$(HOME)/bin/gcc-arm-none-eabi-10-2020-q4-major/bin:$$PATH \
+	/usr/bin/make -f ./apps/board_acrostic/Makefile -j$(CORES)
+	/usr/bin/make -f ./apps/board_acrostic/Makefile program-dfu 
+
+
 board_barcode:
 	LD_LIBRARY_PATH=$(HOME)/bin/gcc-arm-none-eabi-10-2020-q4-major/arm-none-eabi/lib:$$LD_LIBRARY_PATH \
 	PATH=$(HOME)/bin/gcc-arm-none-eabi-10-2020-q4-major/bin:$$PATH \
