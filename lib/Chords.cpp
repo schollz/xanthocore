@@ -1,4 +1,4 @@
-#include "chords.h"
+#include "Chords.h"
 
 // Function to shuffle a single array
 void Chords::shuffleArray(int arr[], int size) {
@@ -40,6 +40,14 @@ int Chords::note_diff_between_notes(int note1, int note2) {
     }
   }
   return note3;
+}
+
+int Chords::GetNote(int beat) {
+  if (beat % (CHORDS_IN_PROGRESSION + NOTES_IN_CHORD) == 0) {
+    Regenerate(rand() > 0);
+  }
+  return note_sequence[beat % (CHORDS_IN_PROGRESSION + NOTES_IN_CHORD)] +
+         note_octaves[(beat / 16) % 3];
 }
 
 int Chords::Regenerate(bool best_is_min) {
