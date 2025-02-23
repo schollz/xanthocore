@@ -10,25 +10,25 @@ const int CHORDS_IN_PROGRESSION = 4;
 const int NOTES_IN_SEQUENCE = NOTES_IN_CHORD * CHORDS_IN_PROGRESSION;
 
 const int8_t chord_dictionary[14][NOTES_IN_CHORD] = {
-    {0, 4, 7},                    // I (C major)
-    {2, 5, 9 - 12},               // ii (D minor)
-    {4, 7, 11 - 12},              // iii (E minor)
-    {5, 9, 12 - 12},              // IV (F major)
-    {7 - 12, 11 - 12, 14 - 12},   // V (G major)
-    {9 - 12, 12 - 12, 16 - 12},   // vi (A minor)
-    {11 - 12, 14 - 12, 17 - 12},  // vii° (B diminished)
-    {0, 3, 7},                    // i (C minor)
-    {2, 6, 9 - 12},               // II (D major)
-    {4, 8, 11 - 12},              // III (E major)
-    {5, 8 - 12, 12 - 12},         // iv (F minor)
-    {7 - 12, 10 - 12, 14 - 12},   // v (G minor)
-    {9 - 12, 13 - 12, 16 - 12},   // VI (A major)
-    {11 - 12, 15 - 12, 17 - 12},  // VII (B major)
+    {0, 4, 7},     // I (C major)
+    {2, 5, 9},     // ii (D minor)
+    {4, 7, 11},    // iii (E minor)
+    {5, 9, 12},    // IV (F major)
+    {7, 11, 14},   // V (G major)
+    {9, 12, 16},   // vi (A minor)
+    {11, 14, 17},  // vii° (B diminished)
+    {0, 3, 7},     // i (C minor)
+    {2, 6, 9},     // II (D major)
+    {4, 8, 11},    // III (E major)
+    {5, 8, 12},    // iv (F minor)
+    {7, 10, 14},   // v (G minor)
+    {9, 13, 16},   // VI (A major)
+    {11, 15, 17},  // VII (B major)
 };
 
 const uint8_t progression_matrix_dictionary
     [CHORD_PROGRESSION_NUM][CHORDS_IN_PROGRESSION] = {
-        {1, 5, 6, 4},  {6, 4, 1, 5},   {1, 6, 4, 5},   {4, 1, 5, 6},
+        {1, 6, 4, 5},  {6, 4, 1, 5},   {1, 6, 4, 5},   {4, 1, 5, 6},
         {1, 4, 6, 5},  {4, 5, 1, 6},   {4, 1, 6, 5},   {1, 3, 6, 4},
         {1, 5, 2, 4},  {6, 5, 4, 1},   {2, 4, 1, 5},   {1, 6, 5, 4},
         {6, 2, 5, 1},  {1, 3, 4, 5},   {1, 6, 2, 5},   {1, 5, 6, 3},
@@ -201,7 +201,7 @@ class Chords {
   int progression_index = 0;  // rand() % CHORD_PROGRESSION_NUM;
   int progression_matrix[CHORDS_IN_PROGRESSION][NOTES_IN_CHORD];
   int note_sequence[CHORDS_IN_PROGRESSION * NOTES_IN_CHORD];
-  int note_octaves[3] = {72, 48, 60};
+  int note_octaves[3] = {0, 12, 12};
 
  private:
   void shuffleArray(int arr[], int size);

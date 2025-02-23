@@ -80,16 +80,25 @@ static void AudioCallback(AudioHandle::InputBuffer in,
     if (metroMeasureTimer.Process()) {
       // iterate beat
       current_measure++;
-      int current_note = chords.GetNote(current_measure) % 24;
-      float volts = (float)current_note / 12.0f;
+      for (int i = 0; i < 8; i++) {
+        leds[i].Write((i == current_measure % 4) ||
+                      (i == current_measure % 4 + 4));
+      }
+      int current_note = chords.GetNote(current_measure);
+      float volts = static_cast<float>(current_note) / 12.0f;
+      while (volts < 0.0f) {
+        volts += 1.0;
+      }
+      while (volts > 2.5f) {
+        volts -= 1.0;
+      }
       if (current_measure % 4 == 0) {
         int loop = (current_measure / 4) % 6;
-        daisyseed.PrintLine("recording measure %d", loop);
+        // daisyseed.PrintLine("recording measure %d", loop);
         acrostic->RecordLoop(loop);
       } else {
-        daisyseed.PrintLine("%d %d %2.2f", current_measure, current_note,
-                            volts);
       }
+      daisyseed.PrintLine("%d %d %2.2f", current_measure, current_note, volts);
       daisyseed.dac.WriteValue(DacHandle::Channel::ONE,
                                roundf(4095.0f / 2.675f * volts));
     }
@@ -105,7 +114,7 @@ static void AudioCallback(AudioHandle::InputBuffer in,
     knobSlew[i].setTarget(val);
     switch (i) {
       case 0:
-        tapeEmulator.SetPregain(knobSlew[i].update() * 10.0f + 1.0f);
+        app->setMainWet(knobSlew[i].update());
         break;
       case 1:
         reverbWet = knobSlew[i].update();
@@ -113,6 +122,7 @@ static void AudioCallback(AudioHandle::InputBuffer in,
         break;
       case 2:
         // do something with the value
+        tapeEmulator.SetPregain(knobSlew[i].update() * 10.0f + 1.0f);
         tapeEmulator.SetBias(knobSlew[i].update());
         break;
     }
@@ -298,7 +308,7 @@ int main(void) {
   daisyseed.PrintLine("Loading barcode...");
   app = new Acrostic();
   acrostic = static_cast<Acrostic *>(app);
-  float bpm = 120.0f;
+  float bpm = 60.0f;
 
   app->Init(tape_linear_buffer, MAX_SIZE, CONFIG_AUDIO_SAMPLE_RATE,
             CONFIG_AUDIO_BLOCK_SIZE);
@@ -336,20 +346,20 @@ int main(void) {
     if (metroPrintTimer.Process()) {
 #ifdef INCLUDE_AUDIO_PROFILING
       // print it to the serial connection (as percentages)
-      daisyseed.PrintLine("CPU Load " FLT_FMT3 "%% " FLT_FMT3 "%% " FLT_FMT3
-                          "%% ",
-                          FLT_VAR3(loadMeter.GetMinCpuLoad() * 100.0f),
-                          FLT_VAR3(loadMeter.GetAvgCpuLoad() * 100.0f),
-                          FLT_VAR3(loadMeter.GetMaxCpuLoad() * 100.0f));
+      // daisyseed.PrintLine("CPU Load " FLT_FMT3 "%% " FLT_FMT3 "%% " FLT_FMT3
+      //                     "%% ",
+      //                     FLT_VAR3(loadMeter.GetMinCpuLoad() * 100.0f),
+      //                     FLT_VAR3(loadMeter.GetAvgCpuLoad() * 100.0f),
+      //                     FLT_VAR3(loadMeter.GetMaxCpuLoad() * 100.0f));
 #endif
-      // print position of voice 0
-      daisyseed.PrintLine(
-          "Position: %2.1f %2.1f %2.1f %2.3f %2.3f %2.3f, %2.3f",
-          app->getVoices().getSavedPosition(0),
-          app->getVoices().getSavedPosition(1),
-          app->getVoices().getSavedPosition(2), knobSlew[0].getValue(),
-          knobSlew[1].getValue(), knobSlew[2].getValue(),
-          tapeEmulator.getFollowerValue());
+      // // print position of voice 0
+      // daisyseed.PrintLine(
+      //     "Position: %2.1f %2.1f %2.1f %2.3f %2.3f %2.3f, %2.3f",
+      //     app->getVoices().getSavedPosition(0),
+      //     app->getVoices().getSavedPosition(1),
+      //     app->getVoices().getSavedPosition(2), knobSlew[0].getValue(),
+      //     knobSlew[1].getValue(), knobSlew[2].getValue(),
+      //     tapeEmulator.getFollowerValue());
     }
 
     // check buttons

@@ -28,7 +28,7 @@ void Acrostic::Init(float *tape, unsigned int numFrames, float sr,
     voices.cutToPos(i, 0.0);
   }
   // process the voices a few times to get their positions set
-  for (size_t i = 0; i < CONFIG_AUDIO_BLOCK_SIZE; i++) {
+  for (size_t i = 0; i < CONFIG_AUDIO_BLOCK_SIZE * 10; i++) {
     float dummy1[2] = {0.0, 0.0};
     float dummy2[2] = {0.0, 0.0};
     float *in[2] = {dummy1, dummy2};
