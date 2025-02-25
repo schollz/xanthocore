@@ -107,7 +107,11 @@ int main() {
                 << std::endl;
     }
     float randomRatio = ratios[rand() % 7];
-    voices.setRate(0, ratios[j % 7] / 2);
+    float octave = 1.0;
+    if (rand() % 2 == 0) {
+      octave = 2.0;
+    }
+    voices.setRate(0, ratios[j % 7] / octave);
   }
 
   outFile.close();
