@@ -53,7 +53,7 @@ int main() {
   voices.setMainWet(1);
   voices.setLoopStart(0);
   voices.setLoopEnd(3);
-  voices.setFadeTime(0.7);
+  voices.setFadeTime(0.4);
   voices.setRecFlag(0, false);
   voices.setPlayFlag(0, true);
   voices.setPreLevel(0, 1);
@@ -85,8 +85,6 @@ int main() {
                      1.8877486253586};
   for (int j = 0; j < 10; j++) {
     voices.cutToPos(0, 0);
-    float randomRatio = ratios[rand() % 7];
-    voices.setRate(0, randomRatio);
     for (int i = 0; i < CONFIG_AUDIO_SAMPLE_RATE / CONFIG_AUDIO_BLOCK_SIZE;
          i++) {
       // in is empty
@@ -108,6 +106,8 @@ int main() {
       std::cout << "Position of the first head: " << voices.getSavedPosition(0)
                 << std::endl;
     }
+    float randomRatio = ratios[rand() % 7];
+    voices.setRate(0, ratios[j % 7] / 2);
   }
 
   outFile.close();
