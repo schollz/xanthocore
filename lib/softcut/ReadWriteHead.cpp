@@ -95,8 +95,11 @@ void ReadWriteHead::processSampleNoWrite(sample_t in, sample_t *out) {
 void ReadWriteHead::setRate(rate_t x) {
   rate = x;
   calcFadeInc();
-  head[0].setRate(x);
-  head[1].setRate(x);
+  head[active].setRate(x);
+  // if no head active, set the inactive head to the correct rate
+  if (head[active].state() == State::Stopped) {
+    head[active ^ 1].setRate(x);
+  }
 }
 
 void ReadWriteHead::setLoopStartSeconds(float x) {
@@ -178,6 +181,8 @@ void ReadWriteHead::cutToPhase(phase_t pos) {
   head[active].active_ = false;
   head[newActive].active_ = true;
   active = newActive;
+  // set the new active head to the correct rate
+  head[active].setRate(rate);
 }
 
 void ReadWriteHead::setFadeTime(float secs) {
