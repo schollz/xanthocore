@@ -70,3 +70,8 @@ rm gcc-arm-none-eabi-10-2020-q4-major.zip
 ```
 
 
+# License
+
+GNU General Public License v3.0
+softcut is a library created by [monome](https://github.com/monome/softcut-lib/blob/main/readme.md) which is licensed under GNU General Public License v3.0.
+
