@@ -205,21 +205,21 @@ int main(void) {
 
   // // setup D11 and D12 for I2c
 
-  buttons[0].Init(D22, GPIO::Mode::OUTPUT);
-  buttons[1].Init(D23, GPIO::Mode::OUTPUT);
-  buttons[2].Init(D24, GPIO::Mode::OUTPUT);
+  buttons[0].Init(D18, GPIO::Mode::OUTPUT);
+  buttons[1].Init(D19, GPIO::Mode::OUTPUT);
+  buttons[2].Init(D20, GPIO::Mode::OUTPUT);
   buttons[0].Write(0);
   buttons[1].Write(0);
   buttons[2].Write(1);
-  button.Init(D25, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  leds[0].Init(D30, GPIO::Mode::OUTPUT);
-  leds[1].Init(D0, GPIO::Mode::OUTPUT);
-  leds[2].Init(D7, GPIO::Mode::OUTPUT);
-  leds[3].Init(D8, GPIO::Mode::OUTPUT);
-  leds[4].Init(D10, GPIO::Mode::OUTPUT);
-  leds[5].Init(D13, GPIO::Mode::OUTPUT);
-  leds[6].Init(D14, GPIO::Mode::OUTPUT);
-  leds[7].Init(D9, GPIO::Mode::OUTPUT);
+  button.Init(D21, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // leds[0].Init(D30, GPIO::Mode::OUTPUT);
+  // leds[1].Init(D0, GPIO::Mode::OUTPUT);
+  // leds[2].Init(D7, GPIO::Mode::OUTPUT);
+  // leds[3].Init(D8, GPIO::Mode::OUTPUT);
+  // leds[4].Init(D10, GPIO::Mode::OUTPUT);
+  // leds[5].Init(D13, GPIO::Mode::OUTPUT);
+  // leds[6].Init(D14, GPIO::Mode::OUTPUT);
+  // leds[7].Init(D9, GPIO::Mode::OUTPUT);
   // // create array of 3 buttons
   // bool buttonOn[8] = {false};
   // uint8_t x = 0;
@@ -287,17 +287,17 @@ int main(void) {
                           daisyseed.PrintLine("Recording stopped");
                           do_update_leds = true;
                           // turn off all leds
-                          for (size_t i = 0; i < 8; i++) {
-                            leds[i].Write(0);
-                          }
+                          // for (size_t i = 0; i < 8; i++) {
+                          //   leds[i].Write(0);
+                          // }
                         });
   app->registerCallback(
       static_cast<int>(Barcode::CallbackType::ON_RECORD_START), []() {
         daisyseed.PrintLine("Recording");
-        // turn on all leds
-        for (size_t i = 0; i < 8; i++) {
-          leds[i].Write(1);
-        }
+        // // turn on all leds
+        // for (size_t i = 0; i < 8; i++) {
+        //   leds[i].Write(1);
+        // }
         do_update_leds = true;
       });
   app->registerCallback(static_cast<int>(Barcode::CallbackType::ON_PLAY_START),

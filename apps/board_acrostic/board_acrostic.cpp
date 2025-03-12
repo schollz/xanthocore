@@ -10,6 +10,9 @@
 #ifdef INCLUDE_FVERB3
 #include "../../lib/fverb3.h"
 #endif
+#ifdef INCLUDE_SDCARD
+#include "fatfs.h"
+#endif
 //
 #include "../../lib/App.h"
 #include "../../lib/Chords.h"
@@ -30,6 +33,9 @@ App *app;
 Acrostic *acrostic;
 Chords chords;
 
+SdmmcHandler sd;
+FatFSInterface fsi;
+FIL SDFile;
 Reverb2 reverb;
 I2CHandle i2c;
 #ifdef INCLUDE_FVERB3
@@ -236,41 +242,123 @@ int main(void) {
   // GPIO d25_;
   // d25_.Init(D25, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
 
-  // // setup D11 and D12 for I2c
-
-  buttons[0].Init(D22, GPIO::Mode::OUTPUT);
-  buttons[1].Init(D23, GPIO::Mode::OUTPUT);
-  buttons[2].Init(D24, GPIO::Mode::OUTPUT);
-  buttons[0].Write(0);
-  buttons[1].Write(0);
-  buttons[2].Write(1);
-  button.Init(D25, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
-  leds[0].Init(D30, GPIO::Mode::OUTPUT);
-  leds[1].Init(D0, GPIO::Mode::OUTPUT);
-  leds[2].Init(D7, GPIO::Mode::OUTPUT);
-  leds[3].Init(D8, GPIO::Mode::OUTPUT);
-  leds[4].Init(D10, GPIO::Mode::OUTPUT);
-  leds[5].Init(D13, GPIO::Mode::OUTPUT);
-  leds[6].Init(D14, GPIO::Mode::OUTPUT);
-  leds[7].Init(D9, GPIO::Mode::OUTPUT);
-  // // create array of 3 buttons
-  // bool buttonOn[8] = {false};
-  // uint8_t x = 0;
+  // GPIO led_serial;
+  // GPIO led_store;
+  // GPIO led_clock;
+  // led_serial.Init(D9, GPIO::Mode::OUTPUT);
+  // led_store.Init(D8, GPIO::Mode::OUTPUT);
+  // led_clock.Init(D7, GPIO::Mode::OUTPUT);
+  // int yoyo = 0;
   // while (true) {
-  //   buttons[0].Write(x & 1);
-  //   buttons[1].Write(x & 2);
-  //   buttons[2].Write(x & 4);
-  //   if (buttonOn[x] != button.Read()) {
-  //     daisyseed.PrintLine("Button %d = %d", x, buttonOn[x]);
-  //     buttonOn[x] = !buttonOn[x];
-  //     leds[x].Write(!buttonOn[x]);
+  //   // Shift 24 bits into the register
+  //   for (int i = 0; i < 24; ++i) {
+  //     // clock down
+  //     led_clock.Write(0);
+
+  //     // write a value
+  //     led_serial.Write(i == yoyo ? 1 : 0);
+
+  //     // clock up
+  //     led_clock.Write(1);
+  //     System::Delay(1);
   //   }
-  //   System::Delay(1);
-  //   x++;
-  //   if (x >= 8) {
-  //     x = 0;
+
+  //   // Latch values correctly
+  //   led_store.Write(0);  // Prepare to latch
+  //   System::Delay(1);    // Ensure stable transition
+  //   led_store.Write(1);  // Latch the shifted bits
+  //   System::Delay(1);    // Ensure stable transition
+  //   led_store.Write(0);  // Finish latching
+
+  //   System::Delay(20);  // Hold the output for 1 second
+  //   yoyo++;
+  //   if (yoyo > 24) {
+  //     yoyo = 0;
   //   }
   // }
+
+  System::Delay(3000);
+  daisyseed.PrintLine("Mounting");
+  System::Delay(1000);
+  daisyseed.PrintLine("Mounting");
+  System::Delay(1000);
+  // Init SD Card
+  SdmmcHandler::Config sd_cfg;
+  sd_cfg.Defaults();
+  // sd_cfg.speed = SdmmcHandler::Speed::FAST;
+  daisyseed.PrintLine("sd.Init(sd_cfg);");
+  sd.Init(sd_cfg);
+  System::Delay(100);
+
+  // Links libdaisy i/o to fatfs driver.
+  daisyseed.PrintLine("fsi.Init(FatFSInterface::Config::MEDIA_SD);");
+  fsi.Init(FatFSInterface::Config::MEDIA_SD);
+  System::Delay(100);
+
+  // Mount SD Card
+  daisyseed.PrintLine("fsi.GetSDFileSystem().mount(\"/\", 1);");
+  FRESULT mount_result = f_mount(&fsi.GetSDFileSystem(), "/", 1);
+  if (mount_result != FR_OK) {
+    daisyseed.PrintLine("Error mounting SD card: %d", mount_result);
+    while (1) {
+      System::Delay(1000);
+    }
+  }
+  System::Delay(100);
+
+  size_t byteswritten;
+  daisyseed.PrintLine("Opening file");
+  FRESULT res = f_open(&SDFile, "test.txt", FA_CREATE_ALWAYS | FA_WRITE);
+  System::Delay(100);
+
+  if (res == FR_OK) {
+    res = f_write(&SDFile, "Hello World!\n", 13, &byteswritten);
+    daisyseed.PrintLine("Error: %d", res);
+    f_close(&SDFile);
+  } else {
+    daisyseed.PrintLine("Error: %d", res);
+  }
+  daisyseed.PrintLine("Hello Daisy Seed");
+
+  buttons[0].Init(D21, GPIO::Mode::OUTPUT, GPIO::Pull::NOPULL);
+  buttons[1].Init(D29, GPIO::Mode::OUTPUT, GPIO::Pull::NOPULL);
+  buttons[2].Init(D30, GPIO::Mode::OUTPUT, GPIO::Pull::NOPULL);
+  // buttons[0].Write(1);
+  // buttons[1].Write(1);
+  // buttons[2].Write(1);
+  button.Init(D28, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // buttons[0].Init(D10, GPIO::Mode::OUTPUT, GPIO::Pull::NOPULL);
+  // buttons[1].Init(D13, GPIO::Mode::OUTPUT, GPIO::Pull::NOPULL);
+  // buttons[2].Init(D14, GPIO::Mode::OUTPUT, GPIO::Pull::NOPULL);
+  // buttons[0].Write(1);
+  // buttons[1].Write(1);
+  // buttons[2].Write(1);
+  // // button.Init(D25, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // // buttons[0].Init(D18, GPIO::Mode::OUTPUT);
+  // // buttons[1].Init(D19, GPIO::Mode::OUTPUT);
+  // // buttons[2].Init(D20, GPIO::Mode::OUTPUT);
+  // // button.Init(D24, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+  // buttons[0].Write(0);
+  // buttons[1].Write(0);
+  // buttons[2].Write(1);
+  // create array of 3 buttons
+  bool buttonOn[8] = {false};
+  uint8_t xx = 0;
+  while (true) {
+    buttons[0].Write(xx & 1);
+    buttons[1].Write(xx & 2);
+    buttons[2].Write(xx & 4);
+    if (buttonOn[xx] != button.Read()) {
+      daisyseed.PrintLine("Button %d = %d", xx, buttonOn[xx]);
+      buttonOn[xx] = !buttonOn[xx];
+      leds[xx].Write(!buttonOn[xx]);
+    }
+    System::Delay(1);
+    xx++;
+    if (xx >= 8) {
+      xx = 0;
+    }
+  }
 
   // Create an ADC Channel Config object
   AdcChannelConfig adc_config[3];
@@ -346,11 +434,11 @@ int main(void) {
     if (metroPrintTimer.Process()) {
 #ifdef INCLUDE_AUDIO_PROFILING
       // print it to the serial connection (as percentages)
-      // daisyseed.PrintLine("CPU Load " FLT_FMT3 "%% " FLT_FMT3 "%% " FLT_FMT3
-      //                     "%% ",
-      //                     FLT_VAR3(loadMeter.GetMinCpuLoad() * 100.0f),
-      //                     FLT_VAR3(loadMeter.GetAvgCpuLoad() * 100.0f),
-      //                     FLT_VAR3(loadMeter.GetMaxCpuLoad() * 100.0f));
+      daisyseed.PrintLine("CPU Load " FLT_FMT3 "%% " FLT_FMT3 "%% " FLT_FMT3
+                          "%% ",
+                          FLT_VAR3(loadMeter.GetMinCpuLoad() * 100.0f),
+                          FLT_VAR3(loadMeter.GetAvgCpuLoad() * 100.0f),
+                          FLT_VAR3(loadMeter.GetMaxCpuLoad() * 100.0f));
 #endif
       // // print position of voice 0
       // daisyseed.PrintLine(

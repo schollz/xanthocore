@@ -2,8 +2,8 @@ TARGET = xanthocore
 
 USE_DAISYSP_LGPL = 1
 
-# APP_TYPE=BOOT_QSPI
-APP_TYPE=BOOT_SRAM
+APP_TYPE=BOOT_QSPI
+# APP_TYPE=BOOT_SRAM
 
 CPP_SOURCES = apps/board_acrostic/board_acrostic.cpp \
 	lib/Config.cpp \
